@@ -3,6 +3,7 @@ using Voluntrio.Common.Application.Abstractions;
 using Voluntrio.Common.Application.Messaging;
 using Voluntrio.Common.Application.Results;
 using Voluntrio.Common.Domain.Exceptions;
+using Voluntrio.Organizations.Application.Federation;
 using Voluntrio.Organizations.Application.Shared;
 using Voluntrio.Organizations.Contracts.UseCases.AddOrganizationMember;
 using Voluntrio.Organizations.Domain.Organizations;
@@ -16,6 +17,7 @@ namespace Voluntrio.Organizations.Application.UseCases.AddOrganizationMember;
 /// </summary>
 public sealed class AddOrganizationMemberHandler(
     AppDbContext dbContext,
+    IFederationMembershipService federationMembershipService,
     IClock clock) : ICommandHandler<AddOrganizationMemberCommand, Result<AddOrganizationMemberResponse>>
 {
     /// <summary>
@@ -38,6 +40,17 @@ public sealed class AddOrganizationMemberHandler(
 
         try
         {
+            var targetFederationId = await federationMembershipService.GetRootOrganizationId(command.OrganizationId, cancellationToken);
+            var userFederationId = await federationMembershipService.GetUserActiveFederationId(command.UserId, cancellationToken);
+
+            if (userFederationId.HasValue && userFederationId.Value != targetFederationId)
+            {
+                return Result<AddOrganizationMemberResponse>.Failure(
+                    new Error(
+                        "organizations.members.cross_federation_forbidden",
+                        "User can only be an active member within a single federation."));
+            }
+
             organization.AddMember(command.ActorUserId, command.UserId, new MembershipRole(command.Role), clock.UtcNow);
             await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -47,6 +60,10 @@ public sealed class AddOrganizationMemberHandler(
                 new AddOrganizationMemberResponse(organization.Id, membership.ToDto()));
         }
         catch (DomainException ex)
+        {
+            return Result<AddOrganizationMemberResponse>.Failure(new Error("organizations.members.add_invalid", ex.Message));
+        }
+        catch (InvalidOperationException ex)
         {
             return Result<AddOrganizationMemberResponse>.Failure(new Error("organizations.members.add_invalid", ex.Message));
         }
