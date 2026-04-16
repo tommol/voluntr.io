@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Voluntrio.Common.Application.Behaviors;
 using Voluntrio.Common.Application.Dispatching;
@@ -95,7 +96,15 @@ public static class OrganizationsModule
 
     public static IEndpointRouteBuilder MapOrganizationsModuleEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/organizations").WithTags("Organizations");
+        var versionSet = app.NewApiVersionSet()
+            .HasApiVersion(new ApiVersion(1))
+            .ReportApiVersions()
+            .Build();
+
+        var group = app.MapGroup("/api/v{version:apiVersion}/organizations")
+            .WithApiVersionSet(versionSet)
+            .WithTags("Organizations");
+
         group.MapRegisteredEndpoints();
         return app;
     }

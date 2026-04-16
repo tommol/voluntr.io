@@ -1,5 +1,8 @@
 using Voluntrio.Organizations;
 using Serilog;
+using Asp.Versioning;
+using Voluntrio.Api.OpenApi;
+using Microsoft.OpenApi;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -18,17 +21,34 @@ try
             .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName));
 
     // Add services to the container.
-    // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-    builder.Services.AddOpenApi();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1);
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.ReportApiVersions = true;
+    });
+    builder.Services.AddSwaggerGen(options =>
+    {
+        options.SwaggerDoc("v1", new OpenApiInfo { Title = "Voluntrio API", Version = "v1" });
+        options.OperationFilter<SubstituteApiVersionRouteParamFilter>();
+        options.OperationFilter<OrganizationActorHeadersOperationFilter>();
+    });
     builder.Services.AddOrganizationsModule(builder.Configuration);
 
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.
-    if (app.Environment.IsDevelopment())
+    app.UseSwagger(options =>
     {
-        app.MapOpenApi();
-    }
+        options.RouteTemplate = "openapi/{documentName}/openapi.json";
+    });
+
+    app.UseSwaggerUI(options =>
+    {
+        options.RoutePrefix = "openapi";
+        options.SwaggerEndpoint("/openapi/v1/openapi.json", "Voluntrio API V1");
+    });
 
     app.UseSerilogRequestLogging();
     app.UseHttpsRedirection();

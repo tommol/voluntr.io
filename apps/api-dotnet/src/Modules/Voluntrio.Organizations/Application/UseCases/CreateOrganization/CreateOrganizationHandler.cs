@@ -57,7 +57,7 @@ public sealed class CreateOrganizationHandler(
         var candidate = baseSlug;
         var counter = 1;
 
-        while (await dbContext.Set<Organization>().AnyAsync(x => x.Slug.Value == candidate, cancellationToken))
+        while (await dbContext.Set<Organization>().AnyAsync(x => x.Slug == OrganizationSlug.Create(candidate), cancellationToken))
         {
             counter++;
             candidate = $"{baseSlug}-{counter}";
