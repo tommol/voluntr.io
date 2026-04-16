@@ -4,6 +4,10 @@ import { getLocaleFromPathname, isLocale, localeCookieName, type Locale } from "
 import { getPreferredLocale } from "@/lib/i18n/locale-detection";
 
 const ONE_YEAR_IN_SECONDS = 60 * 60 * 24 * 365;
+const truthyEnvValues = new Set(["1", "true", "yes", "on"]);
+const ALLOW_ZONE_ACCESS_WITHOUT_AUTH = truthyEnvValues.has(
+  (process.env.ALLOW_ZONE_ACCESS_WITHOUT_AUTH ?? "").trim().toLowerCase(),
+);
 
 function appendLocaleCookie(response: NextResponse, locale: Locale) {
   response.cookies.set(localeCookieName, locale, {
@@ -46,17 +50,19 @@ export function proxy(request: NextRequest) {
     return buildLocalizedRedirect(request, targetLocale, localizedPath);
   }
 
-  const session = getSessionFromCookies(request.cookies);
+  if (!ALLOW_ZONE_ACCESS_WITHOUT_AUTH) {
+    const session = getSessionFromCookies(request.cookies);
 
-  if (
-    (isPathInZone(pathname, localeFromPath, "app") || isPathInZone(pathname, localeFromPath, "admin")) &&
-    !session?.isAuthenticated
-  ) {
-    return buildLocalizedRedirect(request, localeFromPath, `/${localeFromPath}?auth=required`);
-  }
+    if (
+      (isPathInZone(pathname, localeFromPath, "app") || isPathInZone(pathname, localeFromPath, "admin")) &&
+      !session?.isAuthenticated
+    ) {
+      return buildLocalizedRedirect(request, localeFromPath, `/${localeFromPath}?auth=required`);
+    }
 
-  if (isPathInZone(pathname, localeFromPath, "admin") && !session?.roles.includes("admin")) {
-    return buildLocalizedRedirect(request, localeFromPath, `/${localeFromPath}/app?forbidden=1`);
+    if (isPathInZone(pathname, localeFromPath, "admin") && !session?.roles.includes("admin")) {
+      return buildLocalizedRedirect(request, localeFromPath, `/${localeFromPath}/app?forbidden=1`);
+    }
   }
 
   return appendLocaleCookie(NextResponse.next(), localeFromPath);

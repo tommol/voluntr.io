@@ -1,7 +1,9 @@
 import { t } from "@/lib/i18n/dictionaries";
 import { isLocale } from "@/lib/i18n/config";
 import { notFound } from "next/navigation";
-import styles from "../zone-layout.module.css";
+import { SiteHeader } from "../site-header";
+import { LanguageSwitcher } from "../language-switcher";
+import shellStyles from "../zone-layout.module.css";
 
 type LocaleParams = Promise<{ locale: string }>;
 
@@ -18,17 +20,18 @@ export default async function PublicLayout({
   }
 
   return (
-    <div className={styles.shell}>
-      <header className={styles.header}>
-        <nav className={styles.nav}>
-          <a href={`/${locale}`}>{t(locale, "common.nav.landing")}</a>
-          <a href={`/${locale}/app`}>{t(locale, "common.nav.app")}</a>
-          <a href={`/${locale}/admin`}>{t(locale, "common.nav.admin")}</a>
-        </nav>
-        <p className={styles.meta}>
-          {t(locale, "common.languageLabel")}: {locale.toUpperCase()}
-        </p>
-      </header>
+    <div className={shellStyles.shell}>
+      <SiteHeader
+        locale={locale}
+        nav={
+          <>
+            <a href={`/${locale}/pricing`}>{t(locale, "common.nav.pricing")}</a>
+            <a href={`/${locale}/docs`}>{t(locale, "common.nav.docs")}</a>
+            <a href={`/${locale}/about`}>{t(locale, "common.nav.about")}</a>
+          </>
+        }
+        meta={<LanguageSwitcher locale={locale} />}
+      />
       {children}
     </div>
   );

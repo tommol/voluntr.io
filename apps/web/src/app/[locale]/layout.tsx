@@ -50,9 +50,6 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <body>
-        <a href={`/${locale}`} className="site-badge">
-          {t(locale, "common.siteName")}
-        </a>
         {children}
       </body>
     </html>

@@ -1,8 +1,9 @@
 import { requireAuth } from "@/lib/auth/guards";
-import { t } from "@/lib/i18n/dictionaries";
 import { isLocale } from "@/lib/i18n/config";
 import { notFound } from "next/navigation";
-import styles from "../../zone-layout.module.css";
+import { SiteHeader } from "../../site-header";
+import shellStyles from "../../zone-layout.module.css";
+import { LanguageSwitcher } from "../../language-switcher";
 
 type LocaleParams = Promise<{ locale: string }>;
 
@@ -21,15 +22,8 @@ export default async function AppZoneLayout({
   const session = await requireAuth(locale);
 
   return (
-    <div className={styles.shell}>
-      <header className={styles.header}>
-        <nav className={styles.nav}>
-          <a href={`/${locale}`}>{t(locale, "common.nav.landing")}</a>
-          <a href={`/${locale}/app`}>{t(locale, "common.nav.app")}</a>
-          <a href={`/${locale}/admin`}>{t(locale, "common.nav.admin")}</a>
-        </nav>
-        <p className={styles.meta}>{session.userId ?? "user"}</p>
-      </header>
+    <div className={shellStyles.shell}>
+      <SiteHeader locale={locale} meta={<><LanguageSwitcher locale={locale} />{session.userId ?? "user"}</>} />
       {children}
     </div>
   );

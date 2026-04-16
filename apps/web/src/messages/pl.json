@@ -5,7 +5,10 @@
     "nav": {
       "landing": "Landing",
       "app": "Aplikacja",
-      "admin": "Administracja"
+      "admin": "Administracja",
+      "pricing": "Cennik",
+      "docs": "Dokumentacja",
+      "about": "O nas"
     }
   },
   "seo": {
@@ -14,8 +17,10 @@
     "description": "Platforma do współpracy wolontariuszy i organizacji."
   },
   "landing": {
-    "headline": "Koordynuj działania wolontariackie bez tarcia",
-    "description": "Publiczna przestrzeń na komunikację wartości i onboarding.",
+    "eyebrow": "Platforma wolontariatu",
+    "headline": "Mniej chaosu.",
+    "headlineAccent": "Więcej działania.",
+    "description": "Voluntrio daje Twojej organizacji narzędzia, dzięki którym łatwiej zarządzać ludźmi, wydarzeniami i codzienną pracą.",
     "ctaPrimary": "Przejdź do strefy app",
     "ctaSecondary": "Przejdź do strefy admin"
   },
@@ -32,6 +37,52 @@
   "auth": {
     "requiredHint": "Aby wejść do tej sekcji, musisz się zalogować.",
     "forbiddenHint": "Nie masz uprawnień do strefy administracyjnej."
+  },
+  "features": {
+    "headline": "Dlaczego Voluntrio?",
+    "items": [
+      {
+        "icon": "📦",
+        "title": "Wszystko w jednym miejscu",
+        "description": "Koniec z rozproszonymi plikami, arkuszami i wiadomościami. Najważniejsze informacje masz zawsze pod ręką."
+      },
+      {
+        "icon": "🗂️",
+        "title": "Lepsza organizacja zespołu",
+        "description": "Każdy wie, co ma robić, a zadania i odpowiedzialności są jasno przypisane."
+      },
+      {
+        "icon": "👥",
+        "title": "Sprawniejsza obsługa członków",
+        "description": "Zarządzaj członkostwem, rolami i składkami bez zbędnej administracji."
+      },
+      {
+        "icon": "📅",
+        "title": "Łatwiejsze prowadzenie wydarzeń",
+        "description": "Organizuj spotkania, akcje i inicjatywy szybciej i z większą kontrolą."
+      },
+      {
+        "icon": "⚡",
+        "title": "Więcej czasu na misję",
+        "description": "Mniej ręcznej pracy i operacyjnego chaosu oznacza więcej energii na realne działania organizacji."
+      },
+      {
+        "icon": "🚀",
+        "title": "Gotowe do rozwoju",
+        "description": "Niezależnie od tego, czy prowadzisz małe stowarzyszenie, czy większą fundację, Voluntrio rośnie razem z Wami."
+      }
+    ]
+  },
+    "headline": "Prosty, przejrzysty cennik",
+    "description": "Wybierz plan odpowiedni dla Twojej organizacji."
+  },
+  "docs": {
+    "headline": "Dokumentacja",
+    "description": "Wszystko, czego potrzebujesz, żeby zacząć korzystać z voluntr.io."
+  },
+  "about": {
+    "headline": "O voluntr.io",
+    "description": "Budujemy najlepszą platformę do koordynacji wolontariatu."
   }
 }
 
