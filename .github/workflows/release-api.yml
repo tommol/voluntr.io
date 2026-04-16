@@ -1,0 +1,121 @@
+name: release-api
+
+on:
+  push:
+    tags:
+      - 'api/v*'
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: voluntrio-api
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          if [[ ! "$tag" =~ ^api/v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "Invalid tag format: $tag"
+            exit 1
+          fi
+          version="${BASH_REMATCH[1]}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Scaleway Registry
+        shell: bash
+        env:
+          REGISTRY: ${{ secrets.SCW_REGISTRY_ENDPOINT }}
+          NAMESPACE: ${{ secrets.SCW_REGISTRY_NAMESPACE }}
+          ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+          SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$REGISTRY" ] || [ -z "$NAMESPACE" ] || [ -z "$SECRET_KEY" ]; then
+            echo "Missing required secrets: SCW_REGISTRY_ENDPOINT, SCW_REGISTRY_NAMESPACE or SCW_SECRET_KEY"
+            exit 1
+          fi
+          USERNAME="$ACCESS_KEY"
+          if [ -z "$USERNAME" ]; then
+            USERNAME="nologin"
+          fi
+          echo "$SECRET_KEY" | docker login "$REGISTRY" --username "$USERNAME" --password-stdin
+
+      - name: Build and push API image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api-dotnet/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.SCW_REGISTRY_ENDPOINT }}/${{ secrets.SCW_REGISTRY_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ${{ secrets.SCW_REGISTRY_ENDPOINT }}/${{ secrets.SCW_REGISTRY_NAMESPACE }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Save image digest metadata
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          REGISTRY: ${{ secrets.SCW_REGISTRY_ENDPOINT }}
+          NAMESPACE: ${{ secrets.SCW_REGISTRY_NAMESPACE }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist/digests
+          image_ref="$REGISTRY/$NAMESPACE/${IMAGE_NAME}:$VERSION"
+          cat > dist/digests/api.json <<JSON
+          {
+            "app": "api",
+            "tag": "api/v$VERSION",
+            "image": "$image_ref",
+            "digest": "$DIGEST"
+          }
+          JSON
+
+      - name: Upload digest metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-release-${{ steps.version.outputs.version }}
+          path: dist/digests/api.json
+          if-no-files-found: error
+
+      - name: Deploy API to staging
+        shell: bash
+        env:
+          DEPLOY_CMD: ${{ secrets.SCW_STAGING_DEPLOY_CMD_API }}
+          IMAGE_REF: ${{ secrets.SCW_REGISTRY_ENDPOINT }}/${{ secrets.SCW_REGISTRY_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          if [ -z "$DEPLOY_CMD" ]; then
+            echo "Missing SCW_STAGING_DEPLOY_CMD_API secret."
+            exit 1
+          fi
+          bash -lc "$DEPLOY_CMD"
+
+      - name: Run staging API tests
+        shell: bash
+        env:
+          TEST_CMD: ${{ secrets.SCW_STAGING_TEST_CMD_API }}
+          IMAGE_REF: ${{ secrets.SCW_REGISTRY_ENDPOINT }}/${{ secrets.SCW_REGISTRY_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -z "$TEST_CMD" ]; then
+            echo "Missing SCW_STAGING_TEST_CMD_API secret."
+            exit 1
+          fi
+          bash -lc "$TEST_CMD"

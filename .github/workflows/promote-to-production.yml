@@ -1,0 +1,146 @@
+name: promote-to-production
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: Application to promote
+        required: true
+        type: choice
+        options:
+          - api
+          - web
+      source:
+        description: Source for promotion
+        required: true
+        type: choice
+        options:
+          - latest
+          - release_tag
+      tag:
+        description: Release tag (required only when source=release_tag, e.g. api/v1.2.3)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Validate input and resolve image
+        id: resolve
+        shell: bash
+        env:
+          APP: ${{ github.event.inputs.app }}
+          SOURCE: ${{ github.event.inputs.source }}
+          TAG: ${{ github.event.inputs.tag }}
+          REGISTRY: ${{ secrets.SCW_REGISTRY_ENDPOINT }}
+          NAMESPACE: ${{ secrets.SCW_REGISTRY_NAMESPACE }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$REGISTRY" ] || [ -z "$NAMESPACE" ]; then
+            echo "Missing SCW_REGISTRY_ENDPOINT or SCW_REGISTRY_NAMESPACE secret."
+            exit 1
+          fi
+
+          case "$APP" in
+            api)
+              pattern='^api/v([0-9]+\.[0-9]+\.[0-9]+)$'
+              image_name='voluntrio-api'
+              ;;
+            web)
+              pattern='^web/v([0-9]+\.[0-9]+\.[0-9]+)$'
+              image_name='voluntrio-web'
+              ;;
+            *)
+              echo "Unsupported app: $APP"
+              exit 1
+              ;;
+          esac
+
+          if [ "$SOURCE" = "latest" ]; then
+            ref_tag='latest'
+          elif [ "$SOURCE" = "release_tag" ]; then
+            if [ -z "$TAG" ]; then
+              echo "Input 'tag' is required when source=release_tag."
+              exit 1
+            fi
+
+            if [[ ! "$TAG" =~ $pattern ]]; then
+              echo "Tag '$TAG' is invalid for app '$APP'."
+              exit 1
+            fi
+
+            ref_tag="${BASH_REMATCH[1]}"
+          else
+            echo "Unsupported source: $SOURCE"
+            exit 1
+          fi
+
+          image="$REGISTRY/$NAMESPACE/$image_name"
+          image_ref="$image:$ref_tag"
+
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "image_ref=$image_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Login to Scaleway Registry
+        shell: bash
+        env:
+          REGISTRY: ${{ secrets.SCW_REGISTRY_ENDPOINT }}
+          ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+          SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$REGISTRY" ] || [ -z "$SECRET_KEY" ]; then
+            echo "Missing required secrets: SCW_REGISTRY_ENDPOINT or SCW_SECRET_KEY"
+            exit 1
+          fi
+          USERNAME="$ACCESS_KEY"
+          if [ -z "$USERNAME" ]; then
+            USERNAME="nologin"
+          fi
+          echo "$SECRET_KEY" | docker login "$REGISTRY" --username "$USERNAME" --password-stdin
+
+      - name: Resolve immutable digest for selected source
+        id: digest
+        shell: bash
+        env:
+          IMAGE_REF: ${{ steps.resolve.outputs.image_ref }}
+        run: |
+          set -euo pipefail
+          docker pull "$IMAGE_REF"
+          repo_digest=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE_REF")
+          digest="${repo_digest#*@}"
+          if [ -z "$digest" ]; then
+            echo "Unable to resolve digest for $IMAGE_REF"
+            exit 1
+          fi
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy selected app to production
+        shell: bash
+        env:
+          APP: ${{ github.event.inputs.app }}
+          IMAGE_REF: ${{ steps.resolve.outputs.image_ref }}
+          IMAGE_DIGEST: ${{ steps.digest.outputs.digest }}
+          DEPLOY_CMD_API: ${{ secrets.SCW_PROD_DEPLOY_CMD_API }}
+          DEPLOY_CMD_WEB: ${{ secrets.SCW_PROD_DEPLOY_CMD_WEB }}
+        run: |
+          set -euo pipefail
+          if [ "$APP" = "api" ]; then
+            deploy_cmd="$DEPLOY_CMD_API"
+          else
+            deploy_cmd="$DEPLOY_CMD_WEB"
+          fi
+
+          if [ -z "$deploy_cmd" ]; then
+            echo "Missing production deploy command secret for app '$APP'."
+            exit 1
+          fi
+
+          bash -lc "$deploy_cmd"

@@ -1,0 +1,154 @@
+name: PR_build
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: pr-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      api: ${{ steps.filter.outputs.api }}
+      packages: ${{ steps.filter.outputs.packages }}
+      js_tooling: ${{ steps.filter.outputs.js_tooling }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            web:
+              - 'apps/web/**'
+            api:
+              - 'apps/api-dotnet/**'
+            packages:
+              - 'packages/**'
+            js_tooling:
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+
+  web_quality:
+    runs-on: ubuntu-latest
+    needs: detect_changes
+    if: needs.detect_changes.outputs.web == 'true' || needs.detect_changes.outputs.packages == 'true' || needs.detect_changes.outputs.js_tooling == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint web app
+        run: pnpm --filter web lint
+
+      - name: Test web app (if defined)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node -e "const p=require('./apps/web/package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)"; then
+            pnpm --filter web test
+          else
+            echo "No web test script found, skipping."
+          fi
+
+      - name: Build web app
+        run: pnpm --filter web build
+
+  packages_quality:
+    runs-on: ubuntu-latest
+    needs: detect_changes
+    if: needs.detect_changes.outputs.packages == 'true' || needs.detect_changes.outputs.js_tooling == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint packages
+        run: pnpm --filter @voluntr/agent-package-manager lint
+
+      - name: Test packages
+        run: pnpm --filter @voluntr/agent-package-manager test
+
+      - name: Build packages
+        run: pnpm --filter @voluntr/agent-package-manager build
+
+  api_quality:
+    runs-on: ubuntu-latest
+    needs: detect_changes
+    if: needs.detect_changes.outputs.api == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore .NET dependencies
+        run: dotnet restore apps/api-dotnet/Voluntrio.slnx
+
+      - name: Build .NET solution
+        run: dotnet build apps/api-dotnet/Voluntrio.slnx -c Release --no-restore
+
+      - name: Test .NET projects (if present)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t test_projects < <(find apps/api-dotnet -name '*Tests.csproj' -type f | sort)
+
+          if [ "${#test_projects[@]}" -eq 0 ]; then
+            echo "No .NET test projects found, skipping dotnet test."
+            exit 0
+          fi
+
+          for project in "${test_projects[@]}"; do
+            dotnet test "$project" -c Release --no-build
+          done
+
+  no_changes:
+    runs-on: ubuntu-latest
+    needs: detect_changes
+    if: needs.detect_changes.outputs.web != 'true' && needs.detect_changes.outputs.api != 'true' && needs.detect_changes.outputs.packages != 'true' && needs.detect_changes.outputs.js_tooling != 'true'
+
+    steps:
+      - name: No application changes detected
+        run: echo "No changes for web/api/packages. Skipping build jobs."

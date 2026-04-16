@@ -1,0 +1,10 @@
+.git
+.github
+node_modules
+**/node_modules
+**/.next
+**/bin
+**/obj
+.turbo
+pnpm-debug.log*
+.DS_Store
