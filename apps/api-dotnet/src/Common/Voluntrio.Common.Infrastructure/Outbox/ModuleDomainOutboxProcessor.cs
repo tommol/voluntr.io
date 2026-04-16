@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Voluntrio.Common.Infrastructure.Abstractions;
 using Voluntrio.Common.Infrastructure.Persistence;
 
@@ -8,10 +9,12 @@ namespace Voluntrio.Common.Infrastructure.Outbox;
 
 public abstract class ModuleDomainOutboxProcessor(
     IServiceScopeFactory scopeFactory,
-    ILogger logger) : BackgroundService
+    ILogger logger,
+    IOptions<OutboxProcessingOptions> options) : BackgroundService
 {
+    private readonly OutboxProcessingOptions optionsValue = options.Value;
+
     protected virtual int BatchSize => 100;
-    protected virtual TimeSpan PollInterval => TimeSpan.FromSeconds(2);
     protected abstract string DomainEventTypePrefix { get; }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -29,7 +32,7 @@ public abstract class ModuleDomainOutboxProcessor(
 
             if (batch.Count == 0)
             {
-                await Task.Delay(PollInterval, stoppingToken);
+                await Task.Delay(optionsValue.PollInterval, stoppingToken);
                 continue;
             }
 
@@ -55,8 +58,22 @@ public abstract class ModuleDomainOutboxProcessor(
         {
             using var scope = scopeFactory.CreateScope();
             var outboxStore = scope.ServiceProvider.GetRequiredService<IOutboxStore>();
+            var retryCount = message.RetryCount + 1;
+
             logger.LogError(ex, "Outbox domain event processing failed. MessageId={MessageId}, Type={Type}", message.Id, message.Type);
-            await outboxStore.MarkFailedAsync(message.Id, ex.Message, cancellationToken);
+
+            if (retryCount >= optionsValue.MaxRetryAttempts)
+            {
+                await outboxStore.MarkDeadLetterAsync(message.Id, ex.Message, retryCount, DateTime.UtcNow, cancellationToken);
+                return;
+            }
+
+            await outboxStore.MarkFailedForRetryAsync(
+                message.Id,
+                ex.Message,
+                retryCount,
+                DateTime.UtcNow.Add(optionsValue.RetryDelay),
+                cancellationToken);
         }
     }
 

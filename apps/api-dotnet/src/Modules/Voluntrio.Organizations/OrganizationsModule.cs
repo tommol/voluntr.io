@@ -56,6 +56,10 @@ public static class OrganizationsModule
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddIntegrationAbstractions();
+        services
+            .AddOptions<OutboxProcessingOptions>()
+            .Bind(configuration.GetSection(OutboxProcessingOptions.SectionName));
+
         services.AddSingleton<IModelBuilderConfiguration, OrganizationsModelBuilderConfiguration>();
         services.AddSingleton<IIntegrationEventSerializer, SystemTextJsonIntegrationEventSerializer>();
         services.AddSingleton<IDomainEventToIntegrationEventMapper, OrganizationsDomainEventToIntegrationEventMapper>();

@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Voluntrio.Common.Application.Integration;
 using Voluntrio.Common.Infrastructure.Abstractions;
 using Voluntrio.Common.Infrastructure.Persistence;
@@ -13,8 +14,11 @@ namespace Voluntrio.Common.Infrastructure.Outbox;
 /// </summary>
 public sealed class IntegrationOutboxProcessor(
     IServiceScopeFactory scopeFactory,
-    ILogger<IntegrationOutboxProcessor> logger) : BackgroundService
+    ILogger<IntegrationOutboxProcessor> logger,
+    IOptions<OutboxProcessingOptions> options) : BackgroundService
 {
+    private readonly OutboxProcessingOptions optionsValue = options.Value;
+
     private static readonly MethodInfo PublishMethod =
         typeof(IIntegrationEventPublisher)
             .GetMethods()
@@ -24,7 +28,6 @@ public sealed class IntegrationOutboxProcessor(
     private static readonly Lock TypeCacheLock = new();
 
     private const int BatchSize = 100;
-    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -41,7 +44,7 @@ public sealed class IntegrationOutboxProcessor(
 
             if (batch.Count == 0)
             {
-                await Task.Delay(PollInterval, stoppingToken);
+                await Task.Delay(optionsValue.PollInterval, stoppingToken);
                 continue;
             }
 
@@ -78,13 +81,26 @@ public sealed class IntegrationOutboxProcessor(
         {
             using var scope = scopeFactory.CreateScope();
             var outboxStore = scope.ServiceProvider.GetRequiredService<IOutboxStore>();
+            var retryCount = message.RetryCount + 1;
+
             logger.LogError(
                 ex,
                 "Outbox integration event processing failed. MessageId={MessageId}, Type={Type}",
                 message.Id,
                 message.Type);
 
-            await outboxStore.MarkFailedAsync(message.Id, ex.Message, cancellationToken);
+            if (retryCount >= optionsValue.MaxRetryAttempts)
+            {
+                await outboxStore.MarkDeadLetterAsync(message.Id, ex.Message, retryCount, DateTime.UtcNow, cancellationToken);
+                return;
+            }
+
+            await outboxStore.MarkFailedForRetryAsync(
+                message.Id,
+                ex.Message,
+                retryCount,
+                DateTime.UtcNow.Add(optionsValue.RetryDelay),
+                cancellationToken);
         }
     }
 

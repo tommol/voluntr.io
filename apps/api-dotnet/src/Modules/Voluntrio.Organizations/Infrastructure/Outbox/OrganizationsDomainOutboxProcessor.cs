@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Voluntrio.Common.Application.DomainEvents;
 using Voluntrio.Common.Domain.Abstractions;
 using Voluntrio.Common.Infrastructure.Outbox;
@@ -10,8 +11,9 @@ namespace Voluntrio.Organizations.Infrastructure.Outbox;
 
 public sealed class OrganizationsDomainOutboxProcessor(
     IServiceScopeFactory scopeFactory,
-    ILogger<OrganizationsDomainOutboxProcessor> logger)
-    : ModuleDomainOutboxProcessor(scopeFactory, logger)
+    ILogger<OrganizationsDomainOutboxProcessor> logger,
+    IOptions<OutboxProcessingOptions> options)
+    : ModuleDomainOutboxProcessor(scopeFactory, logger, options)
 {
     protected override string DomainEventTypePrefix => "Voluntrio.Organizations.Domain.Events.";
 
