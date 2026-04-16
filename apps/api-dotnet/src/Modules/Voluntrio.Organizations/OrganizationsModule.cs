@@ -17,6 +17,7 @@ using Voluntrio.Common.Persistence.Integration;
 using Voluntrio.Common.Persistence.Stores;
 using Voluntrio.Common.Infrastructure.Integration;
 using Voluntrio.Common.Infrastructure.Outbox;
+using Voluntrio.Organizations.Application.Federation;
 using Voluntrio.Organizations.Application.UseCases.AddOrganizationMember;
 using Voluntrio.Organizations.Application.UseCases.ChangeMemberRole;
 using Voluntrio.Organizations.Application.UseCases.CreateOrganization;
@@ -76,6 +77,7 @@ public static class OrganizationsModule
 
         services.AddScoped<ICommandDispatcher, CommandDispatcher>();
         services.AddScoped<IQueryDispatcher, QueryDispatcher>();
+        services.AddScoped<IFederationMembershipService, FederationMembershipService>();
 
         services.AddScoped<ICommandHandler<CreateOrganizationCommand, Result<CreateOrganizationResponse>>, CreateOrganizationHandler>();
         services.AddScoped<ICommandHandler<CreateSubOrganizationCommand, Result<CreateSubOrganizationResponse>>, CreateSubOrganizationHandler>();
