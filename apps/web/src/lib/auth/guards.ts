@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession, type Session } from "@/lib/auth/session";
 import type { Locale } from "@/lib/i18n/config";
+import { getMyOrganizations } from "@/lib/api/organizations";
 
 const truthyEnvValues = new Set(["1", "true", "yes", "on"]);
 const allowZoneAccessWithoutAuth = truthyEnvValues.has(
@@ -15,14 +16,15 @@ function createBypassSession(requiredRole?: string): Session {
   };
 }
 
-export async function requireAuth(locale: Locale) {
+export async function requireAuth(locale: Locale, targetPath: string = `/${locale}/app`) {
   if (allowZoneAccessWithoutAuth) {
     return createBypassSession();
   }
 
   const session = await getSession();
   if (!session?.isAuthenticated) {
-    redirect(`/${locale}?auth=required`);
+    const loginUrl = `/api/auth/login?post_login_redirect_url=${encodeURIComponent(targetPath)}`;
+    redirect(loginUrl);
   }
 
   return session;
@@ -33,11 +35,20 @@ export async function requireRole(locale: Locale, role: string) {
     return createBypassSession(role);
   }
 
-  const session = await requireAuth(locale);
-  if (!session.roles.includes(role)) {
-    redirect(`/${locale}/app?forbidden=1`);
-  }
-
-  return session;
+  return requireAuth(locale, `/${locale}/admin`);
 }
 
+export async function requireOrganizationMembership(locale: Locale, session: Session) {
+  if (allowZoneAccessWithoutAuth) {
+    return;
+  }
+
+  if (!session.accessToken) {
+    redirect(`/${locale}/no-organization`);
+  }
+
+  const membershipsResult = await getMyOrganizations(session.accessToken);
+  if (!membershipsResult.hasMembership) {
+    redirect(`/${locale}/no-organization`);
+  }
+}

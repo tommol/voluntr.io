@@ -2,6 +2,8 @@ using Voluntrio.Organizations;
 using Serilog;
 using Asp.Versioning;
 using Voluntrio.Api.OpenApi;
+using Voluntrio.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi;
 
 Log.Logger = new LoggerConfiguration()
@@ -33,8 +35,26 @@ try
         options.SwaggerDoc("v1", new OpenApiInfo { Title = "Voluntrio API", Version = "v1" });
         options.OperationFilter<SubstituteApiVersionRouteParamFilter>();
         options.OperationFilter<OrganizationActorHeadersOperationFilter>();
+        options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            Description = "JWT Authorization header using the Bearer scheme.",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT"
+        });
     });
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.Authority = builder.Configuration["Authentication:Kinde:Issuer"];
+            options.Audience = builder.Configuration["Authentication:Kinde:Audience"];
+            options.RequireHttpsMetadata = true;
+        });
+    builder.Services.AddAuthorization();
     builder.Services.AddOrganizationsModule(builder.Configuration);
+    builder.Services.AddIdentityModule();
 
     var app = builder.Build();
 
@@ -52,6 +72,8 @@ try
 
     app.UseSerilogRequestLogging();
     app.UseHttpsRedirection();
+    app.UseAuthentication();
+    app.UseAuthorization();
 
     app.MapOrganizationsModuleEndpoints();
 

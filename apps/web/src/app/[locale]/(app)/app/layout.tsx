@@ -1,4 +1,4 @@
-import { requireAuth } from "@/lib/auth/guards";
+import { requireAuth, requireOrganizationMembership } from "@/lib/auth/guards";
 import { isLocale } from "@/lib/i18n/config";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "../../site-header";
@@ -19,7 +19,8 @@ export default async function AppZoneLayout({
     notFound();
   }
 
-  const session = await requireAuth(locale);
+  const session = await requireAuth(locale, `/${locale}/app`);
+  await requireOrganizationMembership(locale, session);
 
   return (
     <div className={shellStyles.shell}>
@@ -28,4 +29,3 @@ export default async function AppZoneLayout({
     </div>
   );
 }
-

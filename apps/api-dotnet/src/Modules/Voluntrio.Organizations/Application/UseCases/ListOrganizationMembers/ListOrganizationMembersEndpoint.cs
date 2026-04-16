@@ -3,6 +3,7 @@ using Voluntrio.Common.Application.Results;
 using Voluntrio.Organizations.Application.Shared;
 using Voluntrio.Common.Application.Endpoints;
 using Voluntrio.Organizations.Contracts.UseCases.ListOrganizationMembers;
+using Voluntrio.Identity.Application.Abstractions;
 
 namespace Voluntrio.Organizations.Application.UseCases.ListOrganizationMembers;
 
@@ -26,8 +27,25 @@ public sealed class ListOrganizationMembersEndpoint : IEndpoint
         Guid organizationId,
         bool includeInactive,
         IQueryDispatcher queryDispatcher,
+        ICurrentUser currentUser,
+        IOrganizationMembershipAuthorization membershipAuthorization,
         CancellationToken cancellationToken)
     {
+        if (!currentUser.IsAuthenticated || !currentUser.InternalUserId.HasValue)
+        {
+            return new Error("auth.unauthorized", "Unauthorized user.").ToHttpResult();
+        }
+
+        var membershipResult = await membershipAuthorization.EnsureActiveMembership(
+            currentUser.InternalUserId.Value,
+            organizationId,
+            cancellationToken);
+
+        if (membershipResult.IsFailure)
+        {
+            return membershipResult.Error.ToHttpResult();
+        }
+
         var result = await queryDispatcher.Send<ListOrganizationMembersQuery, Result<ListOrganizationMembersResponse>>(
             new ListOrganizationMembersQuery(organizationId, includeInactive),
             cancellationToken);

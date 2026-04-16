@@ -3,6 +3,7 @@ using Voluntrio.Common.Application.Endpoints;
 using Voluntrio.Common.Application.Results;
 using Voluntrio.Organizations.Application.Shared;
 using Voluntrio.Organizations.Contracts.UseCases.CreateSubOrganization;
+using Voluntrio.Identity.Application.Abstractions;
 
 namespace Voluntrio.Organizations.Application.UseCases.CreateSubOrganization;
 
@@ -27,19 +28,30 @@ public sealed class CreateSubOrganizationEndpoint : IEndpoint
         CreateSubOrganizationRequest request,
         HttpContext httpContext,
         ICommandDispatcher commandDispatcher,
+        ICurrentUser currentUser,
+        IOrganizationMembershipAuthorization membershipAuthorization,
         CancellationToken cancellationToken)
     {
-        var actorResult = EndpointUserContext.ReadActorUserId(httpContext);
-        if (actorResult.IsFailure)
+        if (!currentUser.IsAuthenticated || !currentUser.InternalUserId.HasValue)
         {
-            return actorResult.Error.ToHttpResult();
+            return new Error("auth.unauthorized", "Unauthorized user.").ToHttpResult();
+        }
+
+        var membershipResult = await membershipAuthorization.EnsureActiveMembership(
+            currentUser.InternalUserId.Value,
+            parentOrganizationId,
+            cancellationToken);
+
+        if (membershipResult.IsFailure)
+        {
+            return membershipResult.Error.ToHttpResult();
         }
 
         var result = await commandDispatcher.Send<CreateSubOrganizationCommand, Result<CreateSubOrganizationResponse>>(
             new CreateSubOrganizationCommand(
                 parentOrganizationId,
                 request.Name,
-                actorResult.Value,
+                currentUser.InternalUserId.Value,
                 EndpointUserContext.ReadIdempotencyKey(httpContext)),
             cancellationToken);
 

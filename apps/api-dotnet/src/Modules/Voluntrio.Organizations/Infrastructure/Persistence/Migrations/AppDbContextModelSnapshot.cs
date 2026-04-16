@@ -150,6 +150,49 @@ namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox_messages", "common");
                 });
 
+            modelBuilder.Entity("Voluntrio.Identity.Infrastructure.Persistence.ExternalIdentity", b =>
+                {
+                    b.Property<string>("Provider")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("provider");
+
+                    b.Property<string>("ExternalSubject")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("external_subject");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("FamilyName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("family_name");
+
+                    b.Property<string>("GivenName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("given_name");
+
+                    b.Property<Guid>("InternalUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("internal_user_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Provider", "ExternalSubject");
+
+                    b.HasIndex("InternalUserId")
+                        .IsUnique();
+
+                    b.ToTable("external_identities", "identity");
+                });
+
             modelBuilder.Entity("Voluntrio.Organizations.Domain.Memberships.Membership", b =>
                 {
                     b.Property<Guid>("OrganizationId")

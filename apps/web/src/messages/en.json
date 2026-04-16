@@ -27,12 +27,17 @@
   "appZone": {
     "title": "Application Zone",
     "description": "This area has a dedicated layout and requires authentication.",
-    "status": "Current auth mode: skeleton + guards."
+    "status": "Current auth mode: Kinde session + API membership check."
   },
   "adminZone": {
     "title": "Administration Zone",
-    "description": "This area is protected by authentication and role-based access.",
-    "status": "Required role: admin."
+    "description": "This area currently requires sign-in. Role policies will be expanded next.",
+    "status": "Baseline policy: authenticated users only."
+  },
+  "noOrganization": {
+    "title": "No organization access yet",
+    "description": "Your account is authenticated, but there is no active membership assigned in Voluntrio.",
+    "hint": "Ask an administrator to add you to an organization, or create your first organization."
   },
   "auth": {
     "requiredHint": "You need to sign in to enter this section.",
@@ -86,4 +91,3 @@
     "description": "We are building the best platform for volunteer coordination."
   }
 }
-

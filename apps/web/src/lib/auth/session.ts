@@ -1,45 +1,28 @@
-import { cookies } from "next/headers";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 
 export interface Session {
   isAuthenticated: boolean;
   userId?: string;
   roles: string[];
-}
-
-export const sessionCookieName = "voluntr_session";
-export const userIdCookieName = "voluntr_user";
-export const rolesCookieName = "voluntr_roles";
-
-interface CookieReader {
-  get(name: string): { value: string } | undefined;
-}
-
-function parseRoles(rawRoles: string | undefined): string[] {
-  if (!rawRoles) {
-    return [];
-  }
-
-  return rawRoles
-    .split(",")
-    .map((role) => role.trim())
-    .filter(Boolean);
-}
-
-export function getSessionFromCookies(cookieStore: CookieReader): Session | null {
-  const isAuthenticated = cookieStore.get(sessionCookieName)?.value === "1";
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  return {
-    isAuthenticated: true,
-    userId: cookieStore.get(userIdCookieName)?.value,
-    roles: parseRoles(cookieStore.get(rolesCookieName)?.value),
-  };
+  accessToken?: string;
 }
 
 export async function getSession(): Promise<Session | null> {
-  const cookieStore = await cookies();
-  return getSessionFromCookies(cookieStore);
-}
+  const { isAuthenticated, getUser, getRoles, getAccessTokenRaw } = getKindeServerSession();
+  const authenticated = await isAuthenticated();
 
+  if (!authenticated) {
+    return null;
+  }
+
+  const user = await getUser();
+  const rolesResult = await getRoles();
+  const accessToken = await getAccessTokenRaw();
+
+  return {
+    isAuthenticated: true,
+    userId: user?.id,
+    roles: rolesResult?.map((role) => role.key) ?? [],
+    accessToken: accessToken ?? undefined,
+  };
+}

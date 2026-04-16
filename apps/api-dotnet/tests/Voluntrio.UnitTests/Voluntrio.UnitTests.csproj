@@ -15,6 +15,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/Modules/Voluntrio.Identity/Voluntrio.Identity.csproj" />
     <ProjectReference Include="../../src/Modules/Voluntrio.Organizations/Voluntrio.Organizations.csproj" />
   </ItemGroup>
 </Project>

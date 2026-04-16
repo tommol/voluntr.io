@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Voluntrio.Organizations.Contracts/Voluntrio.Organizations.Contracts.csproj" />
+    <ProjectReference Include="../Voluntrio.Identity/Voluntrio.Identity.csproj" />
     <ProjectReference Include="../../Common/Voluntrio.Common.Domain/Voluntrio.Common.Domain.csproj" />
     <ProjectReference Include="../../Common/Voluntrio.Common.Application/Voluntrio.Common.Application.csproj" />
     <ProjectReference Include="../../Common/Voluntrio.Common.Infrastructure/Voluntrio.Common.Infrastructure.csproj" />

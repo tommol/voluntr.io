@@ -5,7 +5,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 namespace Voluntrio.Api.OpenApi;
 
 /// <summary>
-/// Adds test headers used by organization write endpoints so they can be invoked from Swagger UI.
+/// Adds request headers used by organization write endpoints in Swagger UI.
 /// </summary>
 public sealed class OrganizationActorHeadersOperationFilter : IOperationFilter
 {
@@ -32,13 +32,6 @@ public sealed class OrganizationActorHeadersOperationFilter : IOperationFilter
         }
 
         operation.Parameters ??= new List<IOpenApiParameter>();
-
-        AddHeaderIfMissing(
-            operation,
-            "X-User-Id",
-            required: true,
-            "Actor user ID performing the operation (GUID).",
-            "11111111-1111-1111-1111-111111111111");
 
         AddHeaderIfMissing(
             operation,

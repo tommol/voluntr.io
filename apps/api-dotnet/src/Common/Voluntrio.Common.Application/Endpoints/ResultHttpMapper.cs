@@ -7,6 +7,11 @@ public static class ResultHttpMapper
 {
     public static IResult ToHttpResult(this Error error)
     {
+        if (error.Code.StartsWith("auth.forbidden", StringComparison.OrdinalIgnoreCase))
+        {
+            return Microsoft.AspNetCore.Http.Results.StatusCode(StatusCodes.Status403Forbidden);
+        }
+
         if (error.Code.StartsWith("auth.", StringComparison.OrdinalIgnoreCase))
         {
             return Microsoft.AspNetCore.Http.Results.Unauthorized();

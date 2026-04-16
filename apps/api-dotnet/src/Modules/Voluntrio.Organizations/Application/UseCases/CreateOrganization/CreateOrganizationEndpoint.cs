@@ -3,6 +3,7 @@ using Voluntrio.Common.Application.Results;
 using Voluntrio.Organizations.Application.Shared;
 using Voluntrio.Common.Application.Endpoints;
 using Voluntrio.Organizations.Contracts.UseCases.CreateOrganization;
+using Voluntrio.Identity.Application.Abstractions;
 
 namespace Voluntrio.Organizations.Application.UseCases.CreateOrganization;
 
@@ -26,16 +27,16 @@ public sealed class CreateOrganizationEndpoint : IEndpoint
         CreateOrganizationRequest request,
         HttpContext httpContext,
         ICommandDispatcher commandDispatcher,
+        ICurrentUser currentUser,
         CancellationToken cancellationToken)
     {
-        var actorResult = EndpointUserContext.ReadActorUserId(httpContext);
-        if (actorResult.IsFailure)
+        if (!currentUser.IsAuthenticated || !currentUser.InternalUserId.HasValue)
         {
-            return actorResult.Error.ToHttpResult();
+            return new Error("auth.unauthorized", "Unauthorized user.").ToHttpResult();
         }
 
         var result = await commandDispatcher.Send<CreateOrganizationCommand, Result<CreateOrganizationResponse>>(
-            new CreateOrganizationCommand(request.Name, actorResult.Value, EndpointUserContext.ReadIdempotencyKey(httpContext)),
+            new CreateOrganizationCommand(request.Name, currentUser.InternalUserId.Value, EndpointUserContext.ReadIdempotencyKey(httpContext)),
             cancellationToken);
 
         if (result.IsFailure)
