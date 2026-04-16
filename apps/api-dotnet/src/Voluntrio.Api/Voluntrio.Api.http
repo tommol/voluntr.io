@@ -1,0 +1,6 @@
+@Voluntrio.Api_HostAddress = http://localhost:5177
+
+GET {{Voluntrio.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
