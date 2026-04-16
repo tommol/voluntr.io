@@ -62,7 +62,10 @@ public abstract class ModuleIntegrationInboxProcessor(
         {
             logger.LogError(
                 ex,
-                "Inbox integration event processing failed. MessageId={MessageId}, Type={Type}",
+                "Inbox processing failed. Kind={Kind}, Module={Module}, Processor={Processor}, MessageId={MessageId}, MessageType={MessageType}",
+                "Integration",
+                IntegrationEventTypePrefix,
+                GetType().Name,
                 message.Id,
                 message.Type);
         }

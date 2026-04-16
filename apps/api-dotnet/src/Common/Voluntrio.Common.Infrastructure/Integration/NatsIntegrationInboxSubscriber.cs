@@ -19,7 +19,7 @@ public sealed class NatsIntegrationInboxSubscriber(
     IOptions<NatsIntegrationOptions> options,
     ILogger<NatsIntegrationInboxSubscriber> logger) : BackgroundService
 {
-    private readonly NatsIntegrationOptions _options = options.Value;
+    private readonly NatsIntegrationOptions optionsValue = options.Value;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -54,14 +54,22 @@ public sealed class NatsIntegrationInboxSubscriber(
             var eventType = ExtractEventType(message.Subject);
             if (string.IsNullOrWhiteSpace(eventType))
             {
-                logger.LogWarning("Unable to infer integration event type from subject '{Subject}'.", message.Subject);
+                logger.LogWarning(
+                    "NATS inbox message skipped. Processor={Processor}, Subject={Subject}, Reason={Reason}",
+                    nameof(NatsIntegrationInboxSubscriber),
+                    message.Subject,
+                    "UnableToInferEventType");
                 return;
             }
 
             var payload = Encoding.UTF8.GetString(message.Data);
             if (!TryReadMetadata(payload, out var messageId))
             {
-                logger.LogWarning("Skipped NATS integration message on subject '{Subject}' because payload metadata is invalid.", message.Subject);
+                logger.LogWarning(
+                    "NATS inbox message skipped. Processor={Processor}, Subject={Subject}, Reason={Reason}",
+                    nameof(NatsIntegrationInboxSubscriber),
+                    message.Subject,
+                    "InvalidPayloadMetadata");
                 return;
             }
 
@@ -85,19 +93,23 @@ public sealed class NatsIntegrationInboxSubscriber(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "NATS integration message could not be persisted to inbox. Subject={Subject}", message.Subject);
+            logger.LogError(
+                ex,
+                "NATS inbox persistence failed. Processor={Processor}, Subject={Subject}",
+                nameof(NatsIntegrationInboxSubscriber),
+                message.Subject);
         }
     }
 
     private string BuildWildcardSubject()
     {
-        var prefix = _options.SubjectPrefix.Trim('.');
+        var prefix = optionsValue.SubjectPrefix.Trim('.');
         return string.IsNullOrWhiteSpace(prefix) ? ">" : $"{prefix}.>";
     }
 
     private string ExtractEventType(string subject)
     {
-        var prefix = _options.SubjectPrefix.Trim('.');
+        var prefix = optionsValue.SubjectPrefix.Trim('.');
         if (string.IsNullOrWhiteSpace(prefix))
         {
             return subject;

@@ -23,17 +23,21 @@ public sealed class LoggingQueryBehavior<TQuery, TResponse>(ILogger<LoggingQuery
     public async Task<TResponse> Handle(TQuery query, CancellationToken cancellationToken, QueryHandlerDelegate<TResponse> next)
     {
         var queryName = typeof(TQuery).Name;
-        logger.LogInformation("Handling query {QueryName}", queryName);
+        logger.LogInformation("Pipeline query started for {MessageType}", queryName);
 
         var response = await next();
 
         if (response is Result result && result.IsFailure)
         {
-            logger.LogWarning("Query {QueryName} failed with {Code}: {Message}", queryName, result.Error.Code, result.Error.Message);
+            logger.LogWarning(
+                "Pipeline query failed for {MessageType}. ErrorCode={ErrorCode}, ErrorMessage={ErrorMessage}",
+                queryName,
+                result.Error.Code,
+                result.Error.Message);
         }
         else
         {
-            logger.LogInformation("Handled query {QueryName}", queryName);
+            logger.LogInformation("Pipeline query finished for {MessageType}", queryName);
         }
 
         return response;

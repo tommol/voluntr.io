@@ -49,7 +49,7 @@ public static class OrganizationsModule
             npgsql =>
             {
                 npgsql.MigrationsAssembly(typeof(OrganizationsModule).Assembly.GetName().Name);
-                npgsql.MigrationsHistoryTable("__ef_migrations_history", "org");
+                npgsql.MigrationsHistoryTable("__ef_migrations_history", "common");
             }));
 
         services.AddScoped<IClock, SystemClock>();

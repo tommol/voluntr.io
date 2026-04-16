@@ -1,16 +1,21 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
 {
+    /// <inheritdoc />
     public partial class InitialOrganizations : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.EnsureSchema(name: "common");
-            migrationBuilder.EnsureSchema(name: "org");
+            migrationBuilder.EnsureSchema(
+                name: "common");
+
+            migrationBuilder.EnsureSchema(
+                name: "org");
 
             migrationBuilder.CreateTable(
                 name: "idempotency_keys",
@@ -34,7 +39,11 @@ namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
                     received_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     type = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
                     payload = table.Column<string>(type: "text", nullable: false),
-                    processed_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    processed_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    error = table.Column<string>(type: "text", nullable: true),
+                    retry_count = table.Column<int>(type: "integer", nullable: false),
+                    next_retry_on_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    dead_lettered_on_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -70,7 +79,10 @@ namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
                     type = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
                     payload = table.Column<string>(type: "text", nullable: false),
                     processed_on_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    error = table.Column<string>(type: "text", nullable: true)
+                    error = table.Column<string>(type: "text", nullable: true),
+                    retry_count = table.Column<int>(type: "integer", nullable: false),
+                    next_retry_on_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    dead_lettered_on_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -100,6 +112,18 @@ namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_inbox_messages_dead_lettered_on_utc",
+                schema: "common",
+                table: "inbox_messages",
+                column: "dead_lettered_on_utc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_inbox_messages_next_retry_on_utc",
+                schema: "common",
+                table: "inbox_messages",
+                column: "next_retry_on_utc");
 
             migrationBuilder.CreateIndex(
                 name: "IX_inbox_messages_processed_at_utc",
@@ -133,19 +157,46 @@ namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_outbox_messages_dead_lettered_on_utc",
+                schema: "common",
+                table: "outbox_messages",
+                column: "dead_lettered_on_utc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_outbox_messages_next_retry_on_utc",
+                schema: "common",
+                table: "outbox_messages",
+                column: "next_retry_on_utc");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_outbox_messages_processed_on_utc",
                 schema: "common",
                 table: "outbox_messages",
                 column: "processed_on_utc");
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(name: "idempotency_keys", schema: "common");
-            migrationBuilder.DropTable(name: "inbox_messages", schema: "common");
-            migrationBuilder.DropTable(name: "organization_memberships", schema: "org");
-            migrationBuilder.DropTable(name: "outbox_messages", schema: "common");
-            migrationBuilder.DropTable(name: "organizations", schema: "org");
+            migrationBuilder.DropTable(
+                name: "idempotency_keys",
+                schema: "common");
+
+            migrationBuilder.DropTable(
+                name: "inbox_messages",
+                schema: "common");
+
+            migrationBuilder.DropTable(
+                name: "organization_memberships",
+                schema: "org");
+
+            migrationBuilder.DropTable(
+                name: "outbox_messages",
+                schema: "common");
+
+            migrationBuilder.DropTable(
+                name: "organizations",
+                schema: "org");
         }
     }
 }
