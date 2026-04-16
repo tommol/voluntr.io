@@ -1,23 +1,26 @@
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Voluntrio.Common.Application.DomainEvents;
 using Voluntrio.Common.Domain.Abstractions;
-using Voluntrio.Common.Infrastructure.Abstractions;
 using Voluntrio.Common.Infrastructure.Outbox;
 using Voluntrio.Common.Infrastructure.Persistence;
 
 namespace Voluntrio.Organizations.Infrastructure.Outbox;
 
 public sealed class OrganizationsDomainOutboxProcessor(
-    IOutboxStore outboxStore,
-    IDomainEventDispatcher domainEventDispatcher,
+    IServiceScopeFactory scopeFactory,
     ILogger<OrganizationsDomainOutboxProcessor> logger)
-    : ModuleDomainOutboxProcessor(outboxStore, logger)
+    : ModuleDomainOutboxProcessor(scopeFactory, logger)
 {
     protected override string DomainEventTypePrefix => "Voluntrio.Organizations.Domain.Events.";
 
-    protected override async Task PublishDomainEventAsync(OutboxMessage message, CancellationToken cancellationToken)
+    protected override async Task PublishDomainEventAsync(
+        IServiceProvider serviceProvider,
+        OutboxMessage message,
+        CancellationToken cancellationToken)
     {
+        var domainEventDispatcher = serviceProvider.GetRequiredService<IDomainEventDispatcher>();
         var assembly = typeof(OrganizationsDomainOutboxProcessor).Assembly;
         var domainEventType = assembly.GetType(message.Type)
             ?? throw new InvalidOperationException($"Unknown domain event type '{message.Type}'.");

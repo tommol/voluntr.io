@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddIntegrationAbstractions(this IServiceCollection services)
     {
+        services.AddScoped<IIntegrationEventConsumer, IntegrationEventConsumer>();
         return services;
     }
 }

@@ -21,4 +21,37 @@ public interface IInboxStore
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns><c>true</c> when the message exists; otherwise, <c>false</c>.</returns>
     Task<bool> ExistsAsync(Guid messageId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Fetches an ordered batch of unprocessed inbox messages for a given type prefix.
+    /// </summary>
+    Task<IReadOnlyList<InboxMessage>> FetchUnprocessedBatchAsync(
+        string typePrefix,
+        int batchSize,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Marks a message as processed.
+    /// </summary>
+    Task MarkProcessedAsync(Guid messageId, DateTime processedAtUtc, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Marks a message as failed and schedules another retry.
+    /// </summary>
+    Task MarkFailedForRetryAsync(
+        Guid messageId,
+        string error,
+        int retryCount,
+        DateTime nextRetryOnUtc,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Moves a message to dead-letter state after retry exhaustion.
+    /// </summary>
+    Task MarkDeadLetterAsync(
+        Guid messageId,
+        string error,
+        int retryCount,
+        DateTime deadLetteredOnUtc,
+        CancellationToken cancellationToken);
 }

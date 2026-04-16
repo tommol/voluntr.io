@@ -32,9 +32,15 @@ public sealed class EfOutboxStore(AppDbContext dbContext) : IOutboxStore
         int batchSize,
         CancellationToken cancellationToken)
     {
+        var nowUtc = DateTime.UtcNow;
+
         return await dbContext.OutboxMessages
             .AsNoTracking()
-            .Where(x => x.ProcessedOnUtc == null && x.Kind == kind && x.Type.StartsWith(typePrefix))
+            .Where(x => x.ProcessedOnUtc == null &&
+                        x.DeadLetteredOnUtc == null &&
+                        x.Kind == kind &&
+                        x.Type.StartsWith(typePrefix) &&
+                        (x.NextRetryOnUtc == null || x.NextRetryOnUtc <= nowUtc))
             .OrderBy(x => x.OccurredOnUtc)
             .ThenBy(x => x.Id)
             .Take(batchSize)
@@ -60,7 +66,12 @@ public sealed class EfOutboxStore(AppDbContext dbContext) : IOutboxStore
     /// <summary>
     /// Marks an outbox message as failed.
     /// </summary>
-    public async Task MarkFailedAsync(Guid messageId, string error, CancellationToken cancellationToken)
+    public async Task MarkFailedForRetryAsync(
+        Guid messageId,
+        string error,
+        int retryCount,
+        DateTime nextRetryOnUtc,
+        CancellationToken cancellationToken)
     {
         var message = await dbContext.OutboxMessages.SingleOrDefaultAsync(x => x.Id == messageId, cancellationToken);
         if (message is null)
@@ -68,6 +79,32 @@ public sealed class EfOutboxStore(AppDbContext dbContext) : IOutboxStore
             return;
         }
 
+        message.RetryCount = retryCount;
+        message.NextRetryOnUtc = nextRetryOnUtc;
+        message.DeadLetteredOnUtc = null;
+        message.Error = error.Length <= 2000 ? error : error[..2000];
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Moves an outbox message to dead-letter state.
+    /// </summary>
+    public async Task MarkDeadLetterAsync(
+        Guid messageId,
+        string error,
+        int retryCount,
+        DateTime deadLetteredOnUtc,
+        CancellationToken cancellationToken)
+    {
+        var message = await dbContext.OutboxMessages.SingleOrDefaultAsync(x => x.Id == messageId, cancellationToken);
+        if (message is null)
+        {
+            return;
+        }
+
+        message.RetryCount = retryCount;
+        message.NextRetryOnUtc = null;
+        message.DeadLetteredOnUtc = deadLetteredOnUtc;
         message.Error = error.Length <= 2000 ? error : error[..2000];
         await dbContext.SaveChangesAsync(cancellationToken);
     }
@@ -84,10 +121,10 @@ public sealed class EfInboxStore(AppDbContext dbContext) : IInboxStore
     /// <param name="message">The inbox message to add.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A completed task.</returns>
-    public Task AddAsync(InboxMessage message, CancellationToken cancellationToken)
+    public async Task AddAsync(InboxMessage message, CancellationToken cancellationToken)
     {
         dbContext.InboxMessages.Add(message);
-        return Task.CompletedTask;
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>
@@ -99,6 +136,97 @@ public sealed class EfInboxStore(AppDbContext dbContext) : IInboxStore
     public Task<bool> ExistsAsync(Guid messageId, CancellationToken cancellationToken)
     {
         return dbContext.InboxMessages.AnyAsync(x => x.Id == messageId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Fetches unprocessed inbox messages for a given type prefix.
+    /// </summary>
+    public async Task<IReadOnlyList<InboxMessage>> FetchUnprocessedBatchAsync(
+        string typePrefix,
+        int batchSize,
+        CancellationToken cancellationToken)
+    {
+        var nowUtc = DateTime.UtcNow;
+
+        var query = dbContext.InboxMessages
+            .AsNoTracking()
+            .Where(x => x.ProcessedAtUtc == null &&
+                        x.DeadLetteredOnUtc == null &&
+                        (x.NextRetryOnUtc == null || x.NextRetryOnUtc <= nowUtc));
+
+        if (!string.IsNullOrWhiteSpace(typePrefix))
+        {
+            query = query.Where(x => x.Type.StartsWith(typePrefix));
+        }
+
+        return await query
+            .OrderBy(x => x.ReceivedAtUtc)
+            .ThenBy(x => x.Id)
+            .Take(batchSize)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Marks an inbox message as processed.
+    /// </summary>
+    public async Task MarkProcessedAsync(Guid messageId, DateTime processedAtUtc, CancellationToken cancellationToken)
+    {
+        var message = await dbContext.InboxMessages.SingleOrDefaultAsync(x => x.Id == messageId, cancellationToken);
+        if (message is null)
+        {
+            return;
+        }
+
+        message.ProcessedAtUtc = processedAtUtc;
+        message.NextRetryOnUtc = null;
+        message.Error = null;
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Marks an inbox message as failed and schedules another retry.
+    /// </summary>
+    public async Task MarkFailedForRetryAsync(
+        Guid messageId,
+        string error,
+        int retryCount,
+        DateTime nextRetryOnUtc,
+        CancellationToken cancellationToken)
+    {
+        var message = await dbContext.InboxMessages.SingleOrDefaultAsync(x => x.Id == messageId, cancellationToken);
+        if (message is null)
+        {
+            return;
+        }
+
+        message.RetryCount = retryCount;
+        message.NextRetryOnUtc = nextRetryOnUtc;
+        message.DeadLetteredOnUtc = null;
+        message.Error = error.Length <= 2000 ? error : error[..2000];
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Moves an inbox message to dead-letter state.
+    /// </summary>
+    public async Task MarkDeadLetterAsync(
+        Guid messageId,
+        string error,
+        int retryCount,
+        DateTime deadLetteredOnUtc,
+        CancellationToken cancellationToken)
+    {
+        var message = await dbContext.InboxMessages.SingleOrDefaultAsync(x => x.Id == messageId, cancellationToken);
+        if (message is null)
+        {
+            return;
+        }
+
+        message.RetryCount = retryCount;
+        message.NextRetryOnUtc = null;
+        message.DeadLetteredOnUtc = deadLetteredOnUtc;
+        message.Error = error.Length <= 2000 ? error : error[..2000];
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }
 

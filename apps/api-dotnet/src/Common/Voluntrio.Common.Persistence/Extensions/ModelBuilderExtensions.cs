@@ -19,7 +19,12 @@ public static class ModelBuilderExtensions
             builder.Property(x => x.Payload).HasColumnName("payload");
             builder.Property(x => x.ProcessedOnUtc).HasColumnName("processed_on_utc");
             builder.Property(x => x.Error).HasColumnName("error");
+            builder.Property(x => x.RetryCount).HasColumnName("retry_count");
+            builder.Property(x => x.NextRetryOnUtc).HasColumnName("next_retry_on_utc");
+            builder.Property(x => x.DeadLetteredOnUtc).HasColumnName("dead_lettered_on_utc");
             builder.HasIndex(x => x.ProcessedOnUtc);
+            builder.HasIndex(x => x.NextRetryOnUtc);
+            builder.HasIndex(x => x.DeadLetteredOnUtc);
         });
 
         modelBuilder.Entity<Voluntrio.Common.Infrastructure.Persistence.InboxMessage>(builder =>
@@ -31,7 +36,13 @@ public static class ModelBuilderExtensions
             builder.Property(x => x.Type).HasColumnName("type").HasMaxLength(250);
             builder.Property(x => x.Payload).HasColumnName("payload");
             builder.Property(x => x.ProcessedAtUtc).HasColumnName("processed_at_utc");
+            builder.Property(x => x.Error).HasColumnName("error");
+            builder.Property(x => x.RetryCount).HasColumnName("retry_count");
+            builder.Property(x => x.NextRetryOnUtc).HasColumnName("next_retry_on_utc");
+            builder.Property(x => x.DeadLetteredOnUtc).HasColumnName("dead_lettered_on_utc");
             builder.HasIndex(x => x.ProcessedAtUtc);
+            builder.HasIndex(x => x.NextRetryOnUtc);
+            builder.HasIndex(x => x.DeadLetteredOnUtc);
         });
 
         modelBuilder.Entity<Voluntrio.Common.Infrastructure.Persistence.IdempotencyKey>(builder =>

@@ -14,6 +14,8 @@ using Voluntrio.Common.Persistence.Abstractions;
 using Voluntrio.Common.Persistence.Context;
 using Voluntrio.Common.Persistence.Integration;
 using Voluntrio.Common.Persistence.Stores;
+using Voluntrio.Common.Infrastructure.Integration;
+using Voluntrio.Common.Infrastructure.Outbox;
 using Voluntrio.Organizations.Application.UseCases.AddOrganizationMember;
 using Voluntrio.Organizations.Application.UseCases.ChangeMemberRole;
 using Voluntrio.Organizations.Application.UseCases.CreateOrganization;
@@ -53,10 +55,15 @@ public static class OrganizationsModule
         services.AddScoped<IClock, SystemClock>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+        services.AddIntegrationAbstractions();
         services.AddSingleton<IModelBuilderConfiguration, OrganizationsModelBuilderConfiguration>();
         services.AddSingleton<IIntegrationEventSerializer, SystemTextJsonIntegrationEventSerializer>();
         services.AddSingleton<IDomainEventToIntegrationEventMapper, OrganizationsDomainEventToIntegrationEventMapper>();
+        services.AddNatsIntegrationPublishing(configuration);
+        services.AddHostedService<NatsIntegrationInboxSubscriber>();
         services.AddHostedService<OrganizationsDomainOutboxProcessor>();
+        services.AddHostedService<IntegrationOutboxProcessor>();
+        services.AddHostedService<OrganizationsIntegrationInboxProcessor>();
 
         services.AddScoped<ICommandDispatcher, CommandDispatcher>();
         services.AddScoped<IQueryDispatcher, QueryDispatcher>();

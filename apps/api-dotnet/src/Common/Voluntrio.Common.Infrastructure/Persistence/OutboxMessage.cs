@@ -39,4 +39,19 @@ public sealed class OutboxMessage
     /// Gets or sets any error message that occurred during message processing.
     /// </summary>
     public string? Error { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of failed processing attempts.
+    /// </summary>
+    public int RetryCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the UTC timestamp after which processing may be retried.
+    /// </summary>
+    public DateTime? NextRetryOnUtc { get; set; }
+
+    /// <summary>
+    /// Gets or sets the UTC timestamp when the message was moved to dead-letter state.
+    /// </summary>
+    public DateTime? DeadLetteredOnUtc { get; set; }
 }

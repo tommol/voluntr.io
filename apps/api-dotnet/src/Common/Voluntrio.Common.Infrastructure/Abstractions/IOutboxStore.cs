@@ -29,7 +29,22 @@ public interface IOutboxStore
     Task MarkProcessedAsync(Guid messageId, DateTime processedOnUtc, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Marks a message as failed during processing.
+    /// Marks a message as failed and schedules another retry.
     /// </summary>
-    Task MarkFailedAsync(Guid messageId, string error, CancellationToken cancellationToken);
+    Task MarkFailedForRetryAsync(
+        Guid messageId,
+        string error,
+        int retryCount,
+        DateTime nextRetryOnUtc,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Moves a message to dead-letter state after retry exhaustion.
+    /// </summary>
+    Task MarkDeadLetterAsync(
+        Guid messageId,
+        string error,
+        int retryCount,
+        DateTime deadLetteredOnUtc,
+        CancellationToken cancellationToken);
 }
