@@ -2,4 +2,19 @@
   <Folder Name="/src/">
     <Project Path="src/Voluntrio.Api/Voluntrio.Api.csproj" />
   </Folder>
+  <Folder Name="/src/Common/">
+    <Project Path="src/Common/Voluntrio.Common.Application/Voluntrio.Common.Application.csproj" />
+    <Project Path="src/Common/Voluntrio.Common.Domain/Voluntrio.Common.Domain.csproj" />
+    <Project Path="src/Common/Voluntrio.Common.Infrastructure/Voluntrio.Common.Infrastructure.csproj" />
+    <Project Path="src/Common/Voluntrio.Common.Persistence/Voluntrio.Common.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/Voluntrio.Organizations.Contracts/Voluntrio.Organizations.Contracts.csproj" />
+    <Project Path="src/Modules/Voluntrio.Organizations/Voluntrio.Organizations.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Voluntrio.UnitTests/Voluntrio.UnitTests.csproj" />
+    <Project Path="tests/Voluntrio.IntegrationTests/Voluntrio.IntegrationTests.csproj" />
+    <Project Path="tests/Voluntrio.FunctionalTests/Voluntrio.FunctionalTests.csproj" />
+  </Folder>
 </Solution>
