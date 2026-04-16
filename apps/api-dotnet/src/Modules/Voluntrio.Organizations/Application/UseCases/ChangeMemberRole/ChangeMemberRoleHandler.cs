@@ -11,10 +11,19 @@ using Voluntrio.Common.Persistence.Context;
 
 namespace Voluntrio.Organizations.Application.UseCases.ChangeMemberRole;
 
+/// <summary>
+/// Handles changing a member's role within an organization.
+/// </summary>
 public sealed class ChangeMemberRoleHandler(
     AppDbContext dbContext,
     IClock clock) : ICommandHandler<ChangeMemberRoleCommand, Result<ChangeMemberRoleResponse>>
 {
+    /// <summary>
+    /// Handles the change member role command.
+    /// </summary>
+    /// <param name="command">The change member role command.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The role change result containing the updated member data.</returns>
     public async Task<Result<ChangeMemberRoleResponse>> Handle(ChangeMemberRoleCommand command, CancellationToken cancellationToken)
     {
         var organization = await dbContext.Set<Organization>()

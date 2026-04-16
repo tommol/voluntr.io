@@ -80,6 +80,12 @@ namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("occurred_on_utc");
 
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("kind");
+
                     b.Property<string>("Payload")
                         .IsRequired()
                         .HasColumnType("text")

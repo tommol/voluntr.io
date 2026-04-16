@@ -10,10 +10,19 @@ using Voluntrio.Common.Persistence.Context;
 
 namespace Voluntrio.Organizations.Application.UseCases.CreateOrganization;
 
+/// <summary>
+/// Handles the creation of a new organization.
+/// </summary>
 public sealed class CreateOrganizationHandler(
     AppDbContext dbContext,
     IClock clock) : ICommandHandler<CreateOrganizationCommand, Result<CreateOrganizationResponse>>
 {
+    /// <summary>
+    /// Handles the create organization command.
+    /// </summary>
+    /// <param name="command">The create organization command.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The organization creation result containing the new organization data.</returns>
     public async Task<Result<CreateOrganizationResponse>> Handle(CreateOrganizationCommand command, CancellationToken cancellationToken)
     {
         try

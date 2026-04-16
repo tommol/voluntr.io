@@ -4,10 +4,22 @@ using Voluntrio.Common.Application.Results;
 
 namespace Voluntrio.Common.Application.Behaviors;
 
+/// <summary>
+/// Pipeline behavior that ensures idempotent command handling using idempotency keys.
+/// </summary>
+/// <typeparam name="TCommand">The type of command.</typeparam>
+/// <typeparam name="TResponse">The type of response.</typeparam>
 public sealed class IdempotencyCommandBehavior<TCommand, TResponse>(IIdempotencyStore idempotencyStore)
     : ICommandPipelineBehavior<TCommand, TResponse>
     where TCommand : ICommand<TResponse>
 {
+    /// <summary>
+    /// Executes the command with idempotency protection if an idempotency key is present.
+    /// </summary>
+    /// <param name="command">The command to execute.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <param name="next">The next behavior in the pipeline.</param>
+    /// <returns>The command response, or a failure if the idempotency key was already processed.</returns>
     public async Task<TResponse> Handle(TCommand command, CancellationToken cancellationToken, CommandHandlerDelegate<TResponse> next)
     {
         if (command is not IIdempotentCommand<TResponse> idempotentCommand ||

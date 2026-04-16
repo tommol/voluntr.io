@@ -11,10 +11,19 @@ using Voluntrio.Common.Persistence.Context;
 
 namespace Voluntrio.Organizations.Application.UseCases.AddOrganizationMember;
 
+/// <summary>
+/// Handles adding a new member to an organization.
+/// </summary>
 public sealed class AddOrganizationMemberHandler(
     AppDbContext dbContext,
     IClock clock) : ICommandHandler<AddOrganizationMemberCommand, Result<AddOrganizationMemberResponse>>
 {
+    /// <summary>
+    /// Handles the add organization member command.
+    /// </summary>
+    /// <param name="command">The add organization member command.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The member addition result containing the member data.</returns>
     public async Task<Result<AddOrganizationMemberResponse>> Handle(AddOrganizationMemberCommand command, CancellationToken cancellationToken)
     {
         var organization = await dbContext.Set<Organization>()

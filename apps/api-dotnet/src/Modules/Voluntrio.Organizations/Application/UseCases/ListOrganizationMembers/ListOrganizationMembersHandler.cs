@@ -8,9 +8,18 @@ using Voluntrio.Common.Persistence.Context;
 
 namespace Voluntrio.Organizations.Application.UseCases.ListOrganizationMembers;
 
+/// <summary>
+/// Handles listing members of an organization.
+/// </summary>
 public sealed class ListOrganizationMembersHandler(AppDbContext dbContext)
     : IQueryHandler<ListOrganizationMembersQuery, Result<ListOrganizationMembersResponse>>
 {
+    /// <summary>
+    /// Handles the list organization members query.
+    /// </summary>
+    /// <param name="query">The list organization members query.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The list of organization members if found; otherwise, a not found error.</returns>
     public async Task<Result<ListOrganizationMembersResponse>> Handle(ListOrganizationMembersQuery query, CancellationToken cancellationToken)
     {
         var organization = await dbContext.Set<Organization>()

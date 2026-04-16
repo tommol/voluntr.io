@@ -66,6 +66,7 @@ namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     occurred_on_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    kind = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     type = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
                     payload = table.Column<string>(type: "text", nullable: false),
                     processed_on_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),

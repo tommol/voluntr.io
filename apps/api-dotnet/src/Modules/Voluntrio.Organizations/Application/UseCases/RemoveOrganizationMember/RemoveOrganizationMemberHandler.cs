@@ -9,10 +9,19 @@ using Voluntrio.Common.Persistence.Context;
 
 namespace Voluntrio.Organizations.Application.UseCases.RemoveOrganizationMember;
 
+/// <summary>
+/// Handles removal of a member from an organization.
+/// </summary>
 public sealed class RemoveOrganizationMemberHandler(
     AppDbContext dbContext,
     IClock clock) : ICommandHandler<RemoveOrganizationMemberCommand, Result<RemoveOrganizationMemberResponse>>
 {
+    /// <summary>
+    /// Handles the remove organization member command.
+    /// </summary>
+    /// <param name="command">The remove organization member command.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The member removal result containing the updated member data.</returns>
     public async Task<Result<RemoveOrganizationMemberResponse>> Handle(RemoveOrganizationMemberCommand command, CancellationToken cancellationToken)
     {
         var organization = await dbContext.Set<Organization>()

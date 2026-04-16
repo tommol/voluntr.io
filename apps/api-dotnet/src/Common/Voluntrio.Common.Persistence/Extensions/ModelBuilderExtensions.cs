@@ -14,6 +14,7 @@ public static class ModelBuilderExtensions
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasColumnName("id");
             builder.Property(x => x.OccurredOnUtc).HasColumnName("occurred_on_utc");
+            builder.Property(x => x.Kind).HasColumnName("kind").HasMaxLength(30);
             builder.Property(x => x.Type).HasColumnName("type").HasMaxLength(250);
             builder.Property(x => x.Payload).HasColumnName("payload");
             builder.Property(x => x.ProcessedOnUtc).HasColumnName("processed_on_utc");

@@ -1,13 +1,20 @@
 using Voluntrio.Common.Application.Dispatching;
 using Voluntrio.Common.Application.Results;
-using Voluntrio.Organizations.Application.Abstractions;
 using Voluntrio.Organizations.Application.Shared;
+using Voluntrio.Common.Application.Endpoints;
 using Voluntrio.Organizations.Contracts.UseCases.RemoveOrganizationMember;
 
 namespace Voluntrio.Organizations.Application.UseCases.RemoveOrganizationMember;
 
-public sealed class RemoveOrganizationMemberEndpoint : IOrganizationsEndpoint
+/// <summary>
+/// HTTP endpoint for removing a member from an organization.
+/// </summary>
+public sealed class RemoveOrganizationMemberEndpoint : IEndpoint
 {
+    /// <summary>
+    /// Maps the remove organization member endpoint to DELETE /{organizationId}/members/{userId}.
+    /// </summary>
+    /// <param name="organizationsGroup">The route group builder for organizations.</param>
     public void MapEndpoint(IEndpointRouteBuilder organizationsGroup)
     {
         organizationsGroup.MapDelete("/{organizationId:guid}/members/{userId:guid}", Handle)
@@ -25,7 +32,7 @@ public sealed class RemoveOrganizationMemberEndpoint : IOrganizationsEndpoint
         var actorResult = EndpointUserContext.ReadActorUserId(httpContext);
         if (actorResult.IsFailure)
         {
-            return ResultHttpMapper.ToHttpResult(actorResult.Error);
+            return actorResult.Error.ToHttpResult();
         }
 
         var result = await commandDispatcher.Send<RemoveOrganizationMemberCommand, Result<RemoveOrganizationMemberResponse>>(
@@ -37,7 +44,7 @@ public sealed class RemoveOrganizationMemberEndpoint : IOrganizationsEndpoint
             cancellationToken);
 
         return result.IsFailure
-            ? ResultHttpMapper.ToHttpResult(result.Error)
+            ? result.Error.ToHttpResult()
             : Results.Ok(result.Value);
     }
 }

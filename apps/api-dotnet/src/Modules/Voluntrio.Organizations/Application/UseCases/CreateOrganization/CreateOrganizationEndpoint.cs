@@ -1,13 +1,20 @@
 using Voluntrio.Common.Application.Dispatching;
 using Voluntrio.Common.Application.Results;
-using Voluntrio.Organizations.Application.Abstractions;
 using Voluntrio.Organizations.Application.Shared;
+using Voluntrio.Common.Application.Endpoints;
 using Voluntrio.Organizations.Contracts.UseCases.CreateOrganization;
 
 namespace Voluntrio.Organizations.Application.UseCases.CreateOrganization;
 
-public sealed class CreateOrganizationEndpoint : IOrganizationsEndpoint
+/// <summary>
+/// HTTP endpoint for creating a new organization.
+/// </summary>
+public sealed class CreateOrganizationEndpoint : IEndpoint
 {
+    /// <summary>
+    /// Maps the create organization endpoint to POST /.
+    /// </summary>
+    /// <param name="organizationsGroup">The route group builder for organizations.</param>
     public void MapEndpoint(IEndpointRouteBuilder organizationsGroup)
     {
         organizationsGroup.MapPost("/", Handle)
@@ -24,7 +31,7 @@ public sealed class CreateOrganizationEndpoint : IOrganizationsEndpoint
         var actorResult = EndpointUserContext.ReadActorUserId(httpContext);
         if (actorResult.IsFailure)
         {
-            return ResultHttpMapper.ToHttpResult(actorResult.Error);
+            return actorResult.Error.ToHttpResult();
         }
 
         var result = await commandDispatcher.Send<CreateOrganizationCommand, Result<CreateOrganizationResponse>>(
@@ -33,7 +40,7 @@ public sealed class CreateOrganizationEndpoint : IOrganizationsEndpoint
 
         if (result.IsFailure)
         {
-            return ResultHttpMapper.ToHttpResult(result.Error);
+            return result.Error.ToHttpResult();
         }
 
         var response = result.Value;

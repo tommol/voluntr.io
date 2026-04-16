@@ -1,13 +1,20 @@
 using Voluntrio.Common.Application.Dispatching;
 using Voluntrio.Common.Application.Results;
-using Voluntrio.Organizations.Application.Abstractions;
 using Voluntrio.Organizations.Application.Shared;
+using Voluntrio.Common.Application.Endpoints;
 using Voluntrio.Organizations.Contracts.UseCases.GetOrganization;
 
 namespace Voluntrio.Organizations.Application.UseCases.GetOrganization;
 
-public sealed class GetOrganizationEndpoint : IOrganizationsEndpoint
+/// <summary>
+/// HTTP endpoint for retrieving organization details.
+/// </summary>
+public sealed class GetOrganizationEndpoint : IEndpoint
 {
+    /// <summary>
+    /// Maps the get organization endpoint to GET /{organizationId}.
+    /// </summary>
+    /// <param name="organizationsGroup">The route group builder for organizations.</param>
     public void MapEndpoint(IEndpointRouteBuilder organizationsGroup)
     {
         organizationsGroup.MapGet("/{organizationId:guid}", Handle)
@@ -24,7 +31,7 @@ public sealed class GetOrganizationEndpoint : IOrganizationsEndpoint
             new GetOrganizationQuery(organizationId),
             cancellationToken);
         return result.IsFailure
-            ? ResultHttpMapper.ToHttpResult(result.Error)
+            ? result.Error.ToHttpResult()
             : Results.Ok(result.Value);
     }
 }

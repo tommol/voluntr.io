@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Voluntrio.Common.Application.Behaviors;
 using Voluntrio.Common.Application.Dispatching;
+using Voluntrio.Common.Application.DomainEvents;
+using Voluntrio.Common.Application.Endpoints;
+using Voluntrio.Common.Application.Integration;
 using Voluntrio.Common.Application.Results;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,8 +12,8 @@ using Voluntrio.Common.Application.Messaging;
 using Voluntrio.Common.Infrastructure.Abstractions;
 using Voluntrio.Common.Persistence.Abstractions;
 using Voluntrio.Common.Persistence.Context;
+using Voluntrio.Common.Persistence.Integration;
 using Voluntrio.Common.Persistence.Stores;
-using Voluntrio.Organizations.Application.Abstractions;
 using Voluntrio.Organizations.Application.UseCases.AddOrganizationMember;
 using Voluntrio.Organizations.Application.UseCases.ChangeMemberRole;
 using Voluntrio.Organizations.Application.UseCases.CreateOrganization;
@@ -23,6 +26,8 @@ using Voluntrio.Organizations.Contracts.UseCases.CreateOrganization;
 using Voluntrio.Organizations.Contracts.UseCases.GetOrganization;
 using Voluntrio.Organizations.Contracts.UseCases.ListOrganizationMembers;
 using Voluntrio.Organizations.Contracts.UseCases.RemoveOrganizationMember;
+using Voluntrio.Organizations.Infrastructure.Integration;
+using Voluntrio.Organizations.Infrastructure.Outbox;
 using Voluntrio.Organizations.Infrastructure.Persistence;
 
 namespace Voluntrio.Organizations;
@@ -47,7 +52,11 @@ public static class OrganizationsModule
 
         services.AddScoped<IClock, SystemClock>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddSingleton<IModelBuilderConfiguration, OrganizationsModelBuilderConfiguration>();
+        services.AddSingleton<IIntegrationEventSerializer, SystemTextJsonIntegrationEventSerializer>();
+        services.AddSingleton<IDomainEventToIntegrationEventMapper, OrganizationsDomainEventToIntegrationEventMapper>();
+        services.AddHostedService<OrganizationsDomainOutboxProcessor>();
 
         services.AddScoped<ICommandDispatcher, CommandDispatcher>();
         services.AddScoped<IQueryDispatcher, QueryDispatcher>();
@@ -68,7 +77,7 @@ public static class OrganizationsModule
         services.AddScoped<IInboxStore, EfInboxStore>();
         services.AddScoped<IIdempotencyStore, EfIdempotencyStore>();
 
-        RegisterEndpoints(services);
+        services.AddEndpointsFromAssembly(typeof(OrganizationsModule).Assembly);
 
         return services;
     }
@@ -76,29 +85,7 @@ public static class OrganizationsModule
     public static IEndpointRouteBuilder MapOrganizationsModuleEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/organizations").WithTags("Organizations");
-
-        var endpoints = app.ServiceProvider.GetRequiredService<IEnumerable<IOrganizationsEndpoint>>();
-        foreach (var endpoint in endpoints)
-        {
-            endpoint.MapEndpoint(group);
-        }
-
+        group.MapRegisteredEndpoints();
         return app;
-    }
-
-    private static void RegisterEndpoints(IServiceCollection services)
-    {
-        var endpointType = typeof(IOrganizationsEndpoint);
-        var assembly = typeof(OrganizationsModule).Assembly;
-
-        var endpointImplementations = assembly.GetTypes()
-            .Where(type =>
-                type is { IsAbstract: false, IsInterface: false } &&
-                endpointType.IsAssignableFrom(type));
-
-        foreach (var endpointImplementation in endpointImplementations)
-        {
-            services.AddSingleton(endpointType, endpointImplementation);
-        }
     }
 }
