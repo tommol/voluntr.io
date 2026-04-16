@@ -20,14 +20,18 @@ using Voluntrio.Common.Infrastructure.Outbox;
 using Voluntrio.Organizations.Application.UseCases.AddOrganizationMember;
 using Voluntrio.Organizations.Application.UseCases.ChangeMemberRole;
 using Voluntrio.Organizations.Application.UseCases.CreateOrganization;
+using Voluntrio.Organizations.Application.UseCases.CreateSubOrganization;
 using Voluntrio.Organizations.Application.UseCases.GetOrganization;
 using Voluntrio.Organizations.Application.UseCases.ListOrganizationMembers;
+using Voluntrio.Organizations.Application.UseCases.ListSubOrganizations;
 using Voluntrio.Organizations.Application.UseCases.RemoveOrganizationMember;
 using Voluntrio.Organizations.Contracts.UseCases.AddOrganizationMember;
 using Voluntrio.Organizations.Contracts.UseCases.ChangeMemberRole;
 using Voluntrio.Organizations.Contracts.UseCases.CreateOrganization;
+using Voluntrio.Organizations.Contracts.UseCases.CreateSubOrganization;
 using Voluntrio.Organizations.Contracts.UseCases.GetOrganization;
 using Voluntrio.Organizations.Contracts.UseCases.ListOrganizationMembers;
+using Voluntrio.Organizations.Contracts.UseCases.ListSubOrganizations;
 using Voluntrio.Organizations.Contracts.UseCases.RemoveOrganizationMember;
 using Voluntrio.Organizations.Infrastructure.Integration;
 using Voluntrio.Organizations.Infrastructure.Outbox;
@@ -74,11 +78,13 @@ public static class OrganizationsModule
         services.AddScoped<IQueryDispatcher, QueryDispatcher>();
 
         services.AddScoped<ICommandHandler<CreateOrganizationCommand, Result<CreateOrganizationResponse>>, CreateOrganizationHandler>();
+        services.AddScoped<ICommandHandler<CreateSubOrganizationCommand, Result<CreateSubOrganizationResponse>>, CreateSubOrganizationHandler>();
         services.AddScoped<ICommandHandler<AddOrganizationMemberCommand, Result<AddOrganizationMemberResponse>>, AddOrganizationMemberHandler>();
         services.AddScoped<ICommandHandler<ChangeMemberRoleCommand, Result<ChangeMemberRoleResponse>>, ChangeMemberRoleHandler>();
         services.AddScoped<ICommandHandler<RemoveOrganizationMemberCommand, Result<RemoveOrganizationMemberResponse>>, RemoveOrganizationMemberHandler>();
         services.AddScoped<IQueryHandler<GetOrganizationQuery, Result<GetOrganizationResponse>>, GetOrganizationHandler>();
         services.AddScoped<IQueryHandler<ListOrganizationMembersQuery, Result<ListOrganizationMembersResponse>>, ListOrganizationMembersHandler>();
+        services.AddScoped<IQueryHandler<ListSubOrganizationsQuery, Result<ListSubOrganizationsResponse>>, ListSubOrganizationsHandler>();
 
         services.AddScoped(typeof(ICommandPipelineBehavior<,>), typeof(LoggingCommandBehavior<,>));
         services.AddScoped(typeof(ICommandPipelineBehavior<,>), typeof(TransactionCommandBehavior<,>));

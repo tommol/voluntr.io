@@ -8,5 +8,6 @@ public sealed record GetOrganizationResponse(
     string Slug,
     string Status,
     Guid OwnerUserId,
+    Guid? ParentOrganizationId,
     DateTime CreatedAtUtc,
     IReadOnlyList<OrganizationMemberDto> Members);

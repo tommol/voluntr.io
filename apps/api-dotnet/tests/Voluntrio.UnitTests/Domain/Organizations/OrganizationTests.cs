@@ -58,4 +58,40 @@ public sealed class OrganizationTests
 
         Assert.Contains("owner cannot be removed", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void Create_ShouldSetParentOrganizationId_WhenProvided()
+    {
+        var ownerId = Guid.CreateVersion7();
+        var parentOrganizationId = Guid.CreateVersion7();
+
+        var organization = Organization.Create(
+            OrganizationName.Create("Voluntr Team Child"),
+            OrganizationSlug.Create("voluntr-team-child"),
+            ownerId,
+            DateTime.UtcNow,
+            parentOrganizationId);
+
+        Assert.Equal(parentOrganizationId, organization.ParentOrganizationId);
+    }
+
+    [Fact]
+    public void CanManageMembers_ShouldReturnFalse_WhenUserIsNotOwnerOrAdmin()
+    {
+        var ownerId = Guid.CreateVersion7();
+        var memberId = Guid.CreateVersion7();
+        var outsiderId = Guid.CreateVersion7();
+
+        var organization = Organization.Create(
+            OrganizationName.Create("Voluntr Team"),
+            OrganizationSlug.Create("voluntr-team"),
+            ownerId,
+            DateTime.UtcNow);
+
+        organization.AddMember(ownerId, memberId, MembershipRole.Member, DateTime.UtcNow);
+
+        Assert.False(organization.CanManageMembers(memberId));
+        Assert.False(organization.CanManageMembers(outsiderId));
+        Assert.True(organization.CanManageMembers(ownerId));
+    }
 }

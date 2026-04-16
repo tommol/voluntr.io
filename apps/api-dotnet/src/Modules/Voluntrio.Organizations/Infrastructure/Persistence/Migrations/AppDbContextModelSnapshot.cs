@@ -212,6 +212,10 @@ namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("owner_user_id");
 
+                    b.Property<Guid?>("ParentOrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_organization_id");
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -230,10 +234,15 @@ namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ParentOrganizationId");
+
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.ToTable("organizations", "org");
+                    b.ToTable("organizations", "org", t =>
+                        {
+                            t.HasCheckConstraint("CK_organizations_parent_not_self", "parent_organization_id IS NULL OR parent_organization_id <> id");
+                        });
                 });
 
             modelBuilder.Entity("Voluntrio.Organizations.Domain.Memberships.Membership", b =>
@@ -243,6 +252,14 @@ namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
                         .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Voluntrio.Organizations.Domain.Organizations.Organization", b =>
+                {
+                    b.HasOne("Voluntrio.Organizations.Domain.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("ParentOrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Voluntrio.Organizations.Domain.Organizations.Organization", b =>

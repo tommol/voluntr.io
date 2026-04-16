@@ -11,6 +11,7 @@ public sealed class OrganizationsDomainEventToIntegrationEventMapper : IDomainEv
     {
         return domainEvent is
             OrganizationCreatedDomainEvent or
+            SubOrganizationCreatedDomainEvent or
             MemberAddedDomainEvent or
             MemberRoleChangedDomainEvent or
             MemberRemovedDomainEvent;
@@ -26,6 +27,16 @@ public sealed class OrganizationsDomainEventToIntegrationEventMapper : IDomainEv
                     Guid.CreateVersion7(),
                     e.OccurredOnUtc,
                     e.OrganizationId,
+                    e.OwnerUserId)
+            ],
+
+            SubOrganizationCreatedDomainEvent e =>
+            [
+                new SubOrganizationCreatedIntegrationEvent(
+                    Guid.CreateVersion7(),
+                    e.OccurredOnUtc,
+                    e.OrganizationId,
+                    e.ParentOrganizationId,
                     e.OwnerUserId)
             ],
 
