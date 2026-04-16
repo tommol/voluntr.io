@@ -1,0 +1,89 @@
+{
+  "common": {
+    "siteName": "voluntr.io",
+    "languageLabel": "Language",
+    "nav": {
+      "landing": "Landing",
+      "app": "App",
+      "admin": "Admin",
+      "pricing": "Pricing",
+      "docs": "Documentation",
+      "about": "About"
+    }
+  },
+  "seo": {
+    "defaultTitle": "voluntr.io",
+    "titleTemplateSuffix": "voluntr.io",
+    "description": "Volunteer and organization collaboration platform."
+  },
+  "landing": {
+    "eyebrow": "Volunteer platform",
+    "headline": "Less chaos.",
+    "headlineAccent": "More action.",
+    "description": "Voluntrio gives your organisation the tools to manage people, events and day-to-day work with less effort.",
+    "ctaPrimary": "Open app zone",
+    "ctaSecondary": "Open admin zone"
+  },
+  "appZone": {
+    "title": "Application Zone",
+    "description": "This area has a dedicated layout and requires authentication.",
+    "status": "Current auth mode: skeleton + guards."
+  },
+  "adminZone": {
+    "title": "Administration Zone",
+    "description": "This area is protected by authentication and role-based access.",
+    "status": "Required role: admin."
+  },
+  "auth": {
+    "requiredHint": "You need to sign in to enter this section.",
+    "forbiddenHint": "You do not have access to the administration zone."
+  },
+  "features": {
+    "headline": "Why Voluntrio?",
+    "items": [
+      {
+        "icon": "📦",
+        "title": "Everything in one place",
+        "description": "No more scattered files, spreadsheets and messages. The most important information is always at your fingertips."
+      },
+      {
+        "icon": "🗂️",
+        "title": "Better team organisation",
+        "description": "Everyone knows what to do, and tasks and responsibilities are clearly assigned."
+      },
+      {
+        "icon": "👥",
+        "title": "Smoother member management",
+        "description": "Manage memberships, roles and fees without unnecessary administration."
+      },
+      {
+        "icon": "📅",
+        "title": "Easier event management",
+        "description": "Organise meetings, campaigns and initiatives faster and with greater control."
+      },
+      {
+        "icon": "⚡",
+        "title": "More time for your mission",
+        "description": "Less manual work and operational chaos means more energy for real organisational activities."
+      },
+      {
+        "icon": "🚀",
+        "title": "Ready to grow",
+        "description": "Whether you run a small association or a larger foundation, Voluntrio grows with you."
+      }
+    ]
+  },
+  "pricing": {
+    "headline": "Simple, transparent pricing",
+    "description": "Choose the plan that fits your organization."
+  },
+  "docs": {
+    "headline": "Documentation",
+    "description": "Everything you need to get started with voluntr.io."
+  },
+  "about": {
+    "headline": "About voluntr.io",
+    "description": "We are building the best platform for volunteer coordination."
+  }
+}
+

@@ -1,0 +1,28 @@
+.switcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sep {
+  color: var(--color-violet-200);
+  user-select: none;
+}
+
+.link {
+  color: var(--text-muted);
+  padding: 2px 4px;
+  transition: color 0.15s;
+}
+
+.link:hover {
+  color: var(--color-primary);
+}
+
+.active {
+  color: var(--color-primary);
+  font-weight: 700;
+  padding: 2px 4px;
+}
