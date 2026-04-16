@@ -60,10 +60,28 @@ public abstract class ModuleDomainOutboxProcessor(
             var outboxStore = scope.ServiceProvider.GetRequiredService<IOutboxStore>();
             var retryCount = message.RetryCount + 1;
 
-            logger.LogError(ex, "Outbox domain event processing failed. MessageId={MessageId}, Type={Type}", message.Id, message.Type);
+            logger.LogError(
+                ex,
+                "Outbox processing failed. Kind={Kind}, Module={Module}, Processor={Processor}, MessageId={MessageId}, MessageType={MessageType}, Attempt={Attempt}, MaxAttempts={MaxAttempts}",
+                "Domain",
+                DomainEventTypePrefix,
+                GetType().Name,
+                message.Id,
+                message.Type,
+                retryCount,
+                optionsValue.MaxRetryAttempts);
 
             if (retryCount >= optionsValue.MaxRetryAttempts)
             {
+                logger.LogWarning(
+                    "Outbox message moved to dead letter. Kind={Kind}, Module={Module}, Processor={Processor}, MessageId={MessageId}, MessageType={MessageType}, Attempt={Attempt}",
+                    "Domain",
+                    DomainEventTypePrefix,
+                    GetType().Name,
+                    message.Id,
+                    message.Type,
+                    retryCount);
+
                 await outboxStore.MarkDeadLetterAsync(message.Id, ex.Message, retryCount, DateTime.UtcNow, cancellationToken);
                 return;
             }

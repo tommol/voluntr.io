@@ -23,17 +23,21 @@ public sealed class LoggingCommandBehavior<TCommand, TResponse>(ILogger<LoggingC
     public async Task<TResponse> Handle(TCommand command, CancellationToken cancellationToken, CommandHandlerDelegate<TResponse> next)
     {
         var commandName = typeof(TCommand).Name;
-        logger.LogInformation("Handling command {CommandName}", commandName);
+        logger.LogInformation("Pipeline command started for {MessageType}", commandName);
 
         var response = await next();
 
         if (response is Result result && result.IsFailure)
         {
-            logger.LogWarning("Command {CommandName} failed with {Code}: {Message}", commandName, result.Error.Code, result.Error.Message);
+            logger.LogWarning(
+                "Pipeline command failed for {MessageType}. ErrorCode={ErrorCode}, ErrorMessage={ErrorMessage}",
+                commandName,
+                result.Error.Code,
+                result.Error.Message);
         }
         else
         {
-            logger.LogInformation("Handled command {CommandName}", commandName);
+            logger.LogInformation("Pipeline command finished for {MessageType}", commandName);
         }
 
         return response;

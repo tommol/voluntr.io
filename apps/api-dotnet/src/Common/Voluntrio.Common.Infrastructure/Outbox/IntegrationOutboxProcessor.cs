@@ -85,12 +85,26 @@ public sealed class IntegrationOutboxProcessor(
 
             logger.LogError(
                 ex,
-                "Outbox integration event processing failed. MessageId={MessageId}, Type={Type}",
+                "Outbox processing failed. Kind={Kind}, Module={Module}, Processor={Processor}, MessageId={MessageId}, MessageType={MessageType}, Attempt={Attempt}, MaxAttempts={MaxAttempts}",
+                "Integration",
+                "Global",
+                nameof(IntegrationOutboxProcessor),
                 message.Id,
-                message.Type);
+                message.Type,
+                retryCount,
+                optionsValue.MaxRetryAttempts);
 
             if (retryCount >= optionsValue.MaxRetryAttempts)
             {
+                logger.LogWarning(
+                    "Outbox message moved to dead letter. Kind={Kind}, Module={Module}, Processor={Processor}, MessageId={MessageId}, MessageType={MessageType}, Attempt={Attempt}",
+                    "Integration",
+                    "Global",
+                    nameof(IntegrationOutboxProcessor),
+                    message.Id,
+                    message.Type,
+                    retryCount);
+
                 await outboxStore.MarkDeadLetterAsync(message.Id, ex.Message, retryCount, DateTime.UtcNow, cancellationToken);
                 return;
             }

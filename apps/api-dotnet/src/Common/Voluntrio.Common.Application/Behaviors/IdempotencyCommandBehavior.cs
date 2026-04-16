@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Voluntrio.Common.Application.Abstractions;
 using Voluntrio.Common.Application.Messaging;
 using Voluntrio.Common.Application.Results;
@@ -9,7 +10,9 @@ namespace Voluntrio.Common.Application.Behaviors;
 /// </summary>
 /// <typeparam name="TCommand">The type of command.</typeparam>
 /// <typeparam name="TResponse">The type of response.</typeparam>
-public sealed class IdempotencyCommandBehavior<TCommand, TResponse>(IIdempotencyStore idempotencyStore)
+public sealed class IdempotencyCommandBehavior<TCommand, TResponse>(
+    IIdempotencyStore idempotencyStore,
+    ILogger<IdempotencyCommandBehavior<TCommand, TResponse>> logger)
     : ICommandPipelineBehavior<TCommand, TResponse>
     where TCommand : ICommand<TResponse>
 {
@@ -22,27 +25,44 @@ public sealed class IdempotencyCommandBehavior<TCommand, TResponse>(IIdempotency
     /// <returns>The command response, or a failure if the idempotency key was already processed.</returns>
     public async Task<TResponse> Handle(TCommand command, CancellationToken cancellationToken, CommandHandlerDelegate<TResponse> next)
     {
-        if (command is not IIdempotentCommand<TResponse> idempotentCommand ||
-            string.IsNullOrWhiteSpace(idempotentCommand.IdempotencyKey))
+        try
         {
-            return await next();
+            if (command is not IIdempotentCommand<TResponse> idempotentCommand ||
+                string.IsNullOrWhiteSpace(idempotentCommand.IdempotencyKey))
+            {
+                return await next();
+            }
+
+            var key = idempotentCommand.IdempotencyKey!;
+
+            if (await idempotencyStore.ExistsAsync(key, cancellationToken))
+            {
+                logger.LogWarning(
+                    "Idempotency key already processed for {MessageType}. IdempotencyKey={IdempotencyKey}",
+                    typeof(TCommand).Name,
+                    key);
+
+                return CreateFailureResponse("idempotency.duplicate", "Command with this idempotency key has already been processed.");
+            }
+
+            var response = await next();
+
+            if (response is Result result && result.IsSuccess)
+            {
+                await idempotencyStore.MarkProcessedAsync(key, cancellationToken);
+            }
+
+            return response;
         }
-
-        var key = idempotentCommand.IdempotencyKey!;
-
-        if (await idempotencyStore.ExistsAsync(key, cancellationToken))
+        catch (Exception ex)
         {
-            return CreateFailureResponse("idempotency.duplicate", "Command with this idempotency key has already been processed.");
+            logger.LogError(
+                ex,
+                "Unhandled error in idempotency behavior for {MessageType}",
+                typeof(TCommand).Name);
+
+            throw;
         }
-
-        var response = await next();
-
-        if (response is Result result && result.IsSuccess)
-        {
-            await idempotencyStore.MarkProcessedAsync(key, cancellationToken);
-        }
-
-        return response;
     }
 
     private static TResponse CreateFailureResponse(string code, string message)

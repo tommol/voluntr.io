@@ -17,6 +17,11 @@ public static class ResultHttpMapper
             return Microsoft.AspNetCore.Http.Results.NotFound(new { error.Code, error.Message });
         }
 
+        if (error.Code.StartsWith("idempotency.", StringComparison.OrdinalIgnoreCase))
+        {
+            return Microsoft.AspNetCore.Http.Results.Conflict(new { error.Code, error.Message });
+        }
+
         return Microsoft.AspNetCore.Http.Results.BadRequest(new { error.Code, error.Message });
     }
 }

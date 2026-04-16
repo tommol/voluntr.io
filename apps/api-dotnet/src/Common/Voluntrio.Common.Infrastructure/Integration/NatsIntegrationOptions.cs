@@ -16,4 +16,15 @@ public sealed class NatsIntegrationOptions
     /// Prefix used for integration event subjects.
     /// </summary>
     public string SubjectPrefix { get; set; } = "voluntrio.integration";
+
+    /// <summary>
+    /// Optional path to a NATS chained credentials file (.creds).
+    /// </summary>
+    public string? CredentialsPath { get; set; }
+
+    /// <summary>
+    /// When true, disables TLS server certificate validation.
+    /// Use only for local/dev scenarios with self-signed certificates.
+    /// </summary>
+    public bool TlsAllowInsecure { get; set; }
 }
