@@ -38,6 +38,7 @@ public sealed class GetOrganizationHandler(AppDbContext dbContext)
             organization.Slug.Value,
             organization.Status.Value,
             organization.OwnerUserId,
+            organization.ParentOrganizationId,
             organization.CreatedAtUtc,
             organization.Members.Select(x => x.ToDto()).ToList());
 

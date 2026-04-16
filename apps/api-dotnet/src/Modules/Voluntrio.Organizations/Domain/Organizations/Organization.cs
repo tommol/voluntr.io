@@ -34,6 +34,11 @@ public sealed class Organization : AggregateRoot<Guid>
     public Guid OwnerUserId { get; private set; }
 
     /// <summary>
+    /// Gets the ID of the parent organization if this organization is a sub-organization.
+    /// </summary>
+    public Guid? ParentOrganizationId { get; private set; }
+
+    /// <summary>
     /// Gets the UTC timestamp when the organization was created.
     /// </summary>
     public DateTime CreatedAtUtc { get; private set; }
@@ -69,23 +74,34 @@ public sealed class Organization : AggregateRoot<Guid>
         OrganizationName name,
         OrganizationSlug slug,
         Guid ownerUserId,
-        DateTime createdAtUtc)
+        DateTime createdAtUtc,
+        Guid? parentOrganizationId)
         : base(id)
     {
         if (ownerUserId == Guid.Empty)
         {
             throw new DomainException("Owner user id cannot be empty.");
         }
+        
+        if (parentOrganizationId.HasValue && parentOrganizationId.Value == id)
+        {
+            throw new DomainException("Organization cannot be its own parent.");
+        }
 
         Name = name;
         Slug = slug;
         Status = OrganizationStatus.Active;
         OwnerUserId = ownerUserId;
+        ParentOrganizationId = parentOrganizationId;
         CreatedAtUtc = createdAtUtc;
 
         _members.Add(Membership.Create(id, ownerUserId, MembershipRole.Owner, createdAtUtc));
 
         Raise(new OrganizationCreatedDomainEvent(id, ownerUserId, createdAtUtc));
+        if (parentOrganizationId.HasValue)
+        {
+            Raise(new SubOrganizationCreatedDomainEvent(id, parentOrganizationId.Value, ownerUserId, createdAtUtc));
+        }
     }
 
     /// <summary>
@@ -100,9 +116,10 @@ public sealed class Organization : AggregateRoot<Guid>
         OrganizationName name,
         OrganizationSlug slug,
         Guid ownerUserId,
-        DateTime createdAtUtc)
+        DateTime createdAtUtc,
+        Guid? parentOrganizationId = null)
     {
-        return new Organization(Guid.CreateVersion7(), name, slug, ownerUserId, createdAtUtc);
+        return new Organization(Guid.CreateVersion7(), name, slug, ownerUserId, createdAtUtc, parentOrganizationId);
     }
 
     /// <summary>
@@ -182,10 +199,15 @@ public sealed class Organization : AggregateRoot<Guid>
 
     private void EnsureCanManageMembers(Guid actorUserId)
     {
-        var actorMembership = _members.FirstOrDefault(x => x.UserId == actorUserId && x.IsActive);
-        if (actorMembership is null || !actorMembership.CanManageMembers())
+        if (!CanManageMembers(actorUserId))
         {
             throw new DomainException("Only owner or admin can manage organization members.");
         }
+    }
+
+    public bool CanManageMembers(Guid actorUserId)
+    {
+        var actorMembership = _members.FirstOrDefault(x => x.UserId == actorUserId && x.IsActive);
+        return actorMembership is not null && actorMembership.CanManageMembers();
     }
 }

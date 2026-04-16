@@ -11,7 +11,12 @@ public sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organiz
 
     public void Configure(EntityTypeBuilder<Organization> builder)
     {
-        builder.ToTable("organizations", OrganizationSchema);
+        builder.ToTable(
+            "organizations",
+            OrganizationSchema,
+            tableBuilder => tableBuilder.HasCheckConstraint(
+                "CK_organizations_parent_not_self",
+                "parent_organization_id IS NULL OR parent_organization_id <> id"));
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");
@@ -38,6 +43,9 @@ public sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organiz
             .HasColumnName("owner_user_id")
             .IsRequired();
 
+        builder.Property(x => x.ParentOrganizationId)
+            .HasColumnName("parent_organization_id");
+
         builder.Property(x => x.CreatedAtUtc)
             .HasColumnName("created_at_utc")
             .IsRequired();
@@ -47,6 +55,13 @@ public sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organiz
 
         builder.HasIndex(x => x.Slug)
             .IsUnique();
+
+        builder.HasIndex(x => x.ParentOrganizationId);
+
+        builder.HasOne<Organization>()
+            .WithMany()
+            .HasForeignKey(x => x.ParentOrganizationId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(x => x.Members)
             .WithOne()
