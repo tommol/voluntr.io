@@ -2,4 +2,8 @@
   <Folder Name="/src/">
     <Project Path="src/Voluntrio.Api/Voluntrio.Api.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/Voluntrio.Organizations.Contracts/Voluntrio.Organizations.Contracts.csproj" />
+    <Project Path="src/Modules/Voluntrio.Organizations/Voluntrio.Organizations.csproj" />
+  </Folder>
 </Solution>
