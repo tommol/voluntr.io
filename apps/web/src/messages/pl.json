@@ -1,0 +1,37 @@
+{
+  "common": {
+    "siteName": "voluntr.io",
+    "languageLabel": "Język",
+    "nav": {
+      "landing": "Landing",
+      "app": "Aplikacja",
+      "admin": "Administracja"
+    }
+  },
+  "seo": {
+    "defaultTitle": "voluntr.io",
+    "titleTemplateSuffix": "voluntr.io",
+    "description": "Platforma do współpracy wolontariuszy i organizacji."
+  },
+  "landing": {
+    "headline": "Koordynuj działania wolontariackie bez tarcia",
+    "description": "Publiczna przestrzeń na komunikację wartości i onboarding.",
+    "ctaPrimary": "Przejdź do strefy app",
+    "ctaSecondary": "Przejdź do strefy admin"
+  },
+  "appZone": {
+    "title": "Strefa Aplikacji",
+    "description": "Ta część ma osobny layout i wymaga uwierzytelnienia.",
+    "status": "Aktualny tryb auth: szkielet + guardy."
+  },
+  "adminZone": {
+    "title": "Strefa Administracyjna",
+    "description": "Ta część jest chroniona przez uwierzytelnienie i RBAC.",
+    "status": "Wymagana rola: admin."
+  },
+  "auth": {
+    "requiredHint": "Aby wejść do tej sekcji, musisz się zalogować.",
+    "forbiddenHint": "Nie masz uprawnień do strefy administracyjnej."
+  }
+}
+

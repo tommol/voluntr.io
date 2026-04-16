@@ -1,0 +1,37 @@
+{
+  "common": {
+    "siteName": "voluntr.io",
+    "languageLabel": "Language",
+    "nav": {
+      "landing": "Landing",
+      "app": "App",
+      "admin": "Admin"
+    }
+  },
+  "seo": {
+    "defaultTitle": "voluntr.io",
+    "titleTemplateSuffix": "voluntr.io",
+    "description": "Volunteer and organization collaboration platform."
+  },
+  "landing": {
+    "headline": "Coordinate volunteer work without friction",
+    "description": "Public space for your value proposition and onboarding.",
+    "ctaPrimary": "Open app zone",
+    "ctaSecondary": "Open admin zone"
+  },
+  "appZone": {
+    "title": "Application Zone",
+    "description": "This area has a dedicated layout and requires authentication.",
+    "status": "Current auth mode: skeleton + guards."
+  },
+  "adminZone": {
+    "title": "Administration Zone",
+    "description": "This area is protected by authentication and role-based access.",
+    "status": "Required role: admin."
+  },
+  "auth": {
+    "requiredHint": "You need to sign in to enter this section.",
+    "forbiddenHint": "You do not have access to the administration zone."
+  }
+}
+
