@@ -1,10 +1,14 @@
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Voluntrio.Common.Persistence.Context;
 
 #nullable disable
 
 namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20260416200000_AddKindeUserIdToIdentityUsers")]
     public partial class AddKindeUserIdToIdentityUsers : Migration
     {
         /// <inheritdoc />

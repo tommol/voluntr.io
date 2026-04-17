@@ -39,7 +39,9 @@ public sealed class IdentityClaimsTransformation(IIdentityMappingService identit
             new IdentityProfileSnapshot(
                 principal.FindFirstValue(ClaimTypes.Email) ?? principal.FindFirstValue("email"),
                 principal.FindFirstValue(ClaimTypes.GivenName) ?? principal.FindFirstValue("given_name"),
-                principal.FindFirstValue(ClaimTypes.Surname) ?? principal.FindFirstValue("family_name")),
+                principal.FindFirstValue(ClaimTypes.Surname) ?? principal.FindFirstValue("family_name"),
+                principal.FindFirstValue("picture")),
+            overwriteExistingValues: false,
             CancellationToken.None);
 
         identity.AddClaim(new Claim(IdentityClaimTypes.InternalUserId, internalUserId.ToString()));

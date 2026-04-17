@@ -76,6 +76,7 @@ try
     app.UseAuthorization();
 
     app.MapOrganizationsModuleEndpoints();
+    app.MapIdentityModuleEndpoints();
 
     app.MapGet("/", () =>
     {

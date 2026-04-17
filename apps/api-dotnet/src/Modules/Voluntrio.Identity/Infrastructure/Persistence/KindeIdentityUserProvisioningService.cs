@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,6 +15,30 @@ public sealed class KindeIdentityUserProvisioningService(
     IConfiguration configuration) : IIdentityUserProvisioningService
 {
     private const string ProviderName = "kinde";
+
+    public async Task<IdentityProfileSnapshot?> GetProfileByExternalSubjectAsync(
+        string provider,
+        string externalSubject,
+        CancellationToken cancellationToken)
+    {
+        if (!string.Equals(provider, ProviderName, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var kindeUser = await GetKindeUserByIdAsync(externalSubject, cancellationToken)
+            ?? await GetKindeUserByUsersFilterAsync(externalSubject, cancellationToken);
+        if (kindeUser is null)
+        {
+            return null;
+        }
+
+        return new IdentityProfileSnapshot(
+            kindeUser.Email,
+            kindeUser.FirstName,
+            kindeUser.LastName,
+            kindeUser.Picture);
+    }
 
     public async Task<Guid> EnsureInternalUserForEmailAsync(
         string email,
@@ -32,7 +57,12 @@ public sealed class KindeIdentityUserProvisioningService(
 
         if (localUser is not null)
         {
-            localUser.UpdateProfile(normalizedEmail, givenName, familyName, DateTime.UtcNow);
+            localUser.UpdateProfile(
+                normalizedEmail,
+                givenName,
+                familyName,
+                IdentityAvatarUrlResolver.Resolve(normalizedEmail, localUser.AvatarUrl),
+                DateTime.UtcNow);
 
             var localMapping = await dbContext.Set<ExternalIdentity>()
                 .SingleOrDefaultAsync(
@@ -109,6 +139,7 @@ public sealed class KindeIdentityUserProvisioningService(
                         normalizedEmail,
                         givenName ?? kindeUser.FirstName,
                         familyName ?? kindeUser.LastName,
+                        IdentityAvatarUrlResolver.Resolve(normalizedEmail, kindeUser.Picture),
                         DateTime.UtcNow));
             }
             else
@@ -117,6 +148,7 @@ public sealed class KindeIdentityUserProvisioningService(
                     normalizedEmail,
                     givenName ?? kindeUser.FirstName,
                     familyName ?? kindeUser.LastName,
+                    IdentityAvatarUrlResolver.Resolve(normalizedEmail, kindeUser.Picture),
                     DateTime.UtcNow);
 
                 if (!string.Equals(existingMappedUser.KindeUserId, kindeUser.Id, StringComparison.Ordinal))
@@ -142,6 +174,7 @@ public sealed class KindeIdentityUserProvisioningService(
                 normalizedEmail,
                 givenName ?? kindeUser.FirstName,
                 familyName ?? kindeUser.LastName,
+                IdentityAvatarUrlResolver.Resolve(normalizedEmail, kindeUser.Picture),
                 DateTime.UtcNow));
 
         dbContext.Set<ExternalIdentity>().Add(
@@ -183,7 +216,81 @@ public sealed class KindeIdentityUserProvisioningService(
 
         return matching is null
             ? null
-            : new KindeUser(matching.Id, matching.Email, matching.FirstName, matching.LastName);
+            : new KindeUser(matching.Id, matching.Email, matching.FirstName, matching.LastName, matching.Picture);
+    }
+
+    private async Task<KindeUser?> GetKindeUserByIdAsync(string kindeUserId, CancellationToken cancellationToken)
+    {
+        var token = await GetManagementApiTokenAsync(cancellationToken);
+        var issuer = GetIssuer();
+        using var client = httpClientFactory.CreateClient();
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{issuer}/api/v1/user?id={Uri.EscapeDataString(kindeUserId)}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        using var response = await client.SendAsync(request, cancellationToken);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        using var payload = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken);
+        if (payload is null)
+        {
+            return null;
+        }
+
+        var root = payload.RootElement;
+        if (root.TryGetProperty("user", out var nestedUser) && nestedUser.ValueKind == JsonValueKind.Object)
+        {
+            return ParseKindeUserFromElement(nestedUser);
+        }
+
+        return root.ValueKind == JsonValueKind.Object
+            ? ParseKindeUserFromElement(root)
+            : null;
+    }
+
+    private async Task<KindeUser?> GetKindeUserByUsersFilterAsync(string kindeUserId, CancellationToken cancellationToken)
+    {
+        var token = await GetManagementApiTokenAsync(cancellationToken);
+        var issuer = GetIssuer();
+        using var client = httpClientFactory.CreateClient();
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{issuer}/api/v1/users?user_id={Uri.EscapeDataString(kindeUserId)}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        using var response = await client.SendAsync(request, cancellationToken);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        using var payload = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken);
+        if (payload is null)
+        {
+            return null;
+        }
+
+        var users = ExtractUsersArray(payload.RootElement);
+        foreach (var userElement in users)
+        {
+            var user = ParseKindeUserFromElement(userElement);
+            if (user is not null && string.Equals(user.Id, kindeUserId, StringComparison.Ordinal))
+            {
+                return user;
+            }
+        }
+
+        return null;
     }
 
     private async Task<KindeUser> CreateKindeUserAsync(
@@ -230,7 +337,7 @@ public sealed class KindeIdentityUserProvisioningService(
             throw new InvalidOperationException("Kinde create user response did not contain user id.");
         }
 
-        return new KindeUser(payload.Id, email, givenName, familyName);
+        return new KindeUser(payload.Id, email, givenName, familyName, null);
     }
 
     private async Task<string> GetManagementApiTokenAsync(CancellationToken cancellationToken)
@@ -281,7 +388,7 @@ public sealed class KindeIdentityUserProvisioningService(
         return issuer;
     }
 
-    private sealed record KindeUser(string Id, string? Email, string? FirstName, string? LastName);
+    private sealed record KindeUser(string Id, string? Email, string? FirstName, string? LastName, string? Picture);
 
     private sealed class KindeUsersResponse
     {
@@ -306,8 +413,20 @@ public sealed class KindeIdentityUserProvisioningService(
         [JsonPropertyName("first_name")]
         public string? FirstName { get; init; }
 
+        [JsonPropertyName("given_name")]
+        public string? GivenName { get; init; }
+
         [JsonPropertyName("last_name")]
         public string? LastName { get; init; }
+
+        [JsonPropertyName("family_name")]
+        public string? FamilyName { get; init; }
+
+        [JsonPropertyName("picture")]
+        public string? Picture { get; init; }
+
+        [JsonPropertyName("identities")]
+        public List<KindeIdentityData>? Identities { get; init; }
     }
 
     private sealed class KindeCreateUserResponse
@@ -320,5 +439,173 @@ public sealed class KindeIdentityUserProvisioningService(
     {
         [JsonPropertyName("access_token")]
         public string? AccessToken { get; init; }
+    }
+
+    private sealed class KindeUserByIdResponse
+    {
+        [JsonPropertyName("id")]
+        public string? Id { get; init; }
+
+        [JsonPropertyName("email")]
+        public string? Email { get; init; }
+
+        [JsonPropertyName("preferred_email")]
+        public string? PreferredEmail { get; init; }
+
+        [JsonPropertyName("first_name")]
+        public string? FirstName { get; init; }
+
+        [JsonPropertyName("given_name")]
+        public string? GivenName { get; init; }
+
+        [JsonPropertyName("last_name")]
+        public string? LastName { get; init; }
+
+        [JsonPropertyName("family_name")]
+        public string? FamilyName { get; init; }
+
+        [JsonPropertyName("picture")]
+        public string? Picture { get; init; }
+
+        [JsonPropertyName("identities")]
+        public List<KindeIdentityData>? Identities { get; init; }
+    }
+
+    private sealed class KindeIdentityData
+    {
+        [JsonPropertyName("type")]
+        public string? Type { get; init; }
+
+        [JsonPropertyName("identity")]
+        public string? Identity { get; init; }
+    }
+
+    private static string? ExtractEmailFromIdentities(List<KindeIdentityData>? identities)
+    {
+        var emailIdentity = identities?.FirstOrDefault(x =>
+            string.Equals(x.Type, "email", StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(x.Identity));
+        return emailIdentity?.Identity;
+    }
+
+    private static string? CoalesceNonEmpty(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    private static KindeUser? ParseKindeUserFromElement(JsonElement user)
+    {
+        var id = CoalesceNonEmpty(
+            ReadString(user, "id"),
+            ReadString(user, "user_id"));
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return null;
+        }
+
+        var email = CoalesceNonEmpty(
+            ReadString(user, "preferred_email"),
+            ReadString(user, "email"),
+            ExtractEmailFromIdentityElements(user));
+        var givenName = CoalesceNonEmpty(
+            ReadString(user, "first_name"),
+            ReadString(user, "given_name"));
+        var familyName = CoalesceNonEmpty(
+            ReadString(user, "last_name"),
+            ReadString(user, "family_name"));
+        var picture = CoalesceNonEmpty(
+            ReadString(user, "picture"),
+            ReadString(user, "picture_url"),
+            ReadString(user, "avatar_url"));
+
+        return new KindeUser(id, email, givenName, familyName, picture);
+    }
+
+    private static IEnumerable<JsonElement> ExtractUsersArray(JsonElement root)
+    {
+        if (root.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in root.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.Object)
+                {
+                    yield return item;
+                }
+            }
+
+            yield break;
+        }
+
+        if (root.ValueKind == JsonValueKind.Object
+            && root.TryGetProperty("users", out var users)
+            && users.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in users.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.Object)
+                {
+                    yield return item;
+                }
+            }
+        }
+    }
+
+    private static string? ExtractEmailFromIdentityElements(JsonElement user)
+    {
+        if (!user.TryGetProperty("identities", out var identities) || identities.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        foreach (var identity in identities.EnumerateArray())
+        {
+            if (identity.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            var type = ReadString(identity, "type");
+            if (!string.Equals(type, "email", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var email = CoalesceNonEmpty(
+                ReadString(identity, "identity"),
+                ReadString(identity, "email"));
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                return email;
+            }
+
+            if (identity.TryGetProperty("details", out var details) && details.ValueKind == JsonValueKind.Object)
+            {
+                var detailsEmail = ReadString(details, "email");
+                if (!string.IsNullOrWhiteSpace(detailsEmail))
+                {
+                    return detailsEmail;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static string? ReadString(JsonElement source, string propertyName)
+    {
+        if (!source.TryGetProperty(propertyName, out var value))
+        {
+            return null;
+        }
+
+        return value.ValueKind == JsonValueKind.String ? value.GetString() : null;
     }
 }

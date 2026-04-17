@@ -39,6 +39,12 @@
     "description": "Your account is authenticated, but there is no active membership assigned in Voluntrio.",
     "hint": "Ask an administrator to add you to an organization, or create your first organization."
   },
+  "signedOut": {
+    "title": "You are signed out",
+    "description": "Your session has been safely ended.",
+    "hint": "You can sign in again at any time.",
+    "backToHome": "Back to home page"
+  },
   "auth": {
     "requiredHint": "You need to sign in to enter this section.",
     "forbiddenHint": "You do not have access to the administration zone."

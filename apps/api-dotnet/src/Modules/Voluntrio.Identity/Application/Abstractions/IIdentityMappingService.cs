@@ -6,5 +6,6 @@ public interface IIdentityMappingService
         string provider,
         string externalSubject,
         IdentityProfileSnapshot profileSnapshot,
+        bool overwriteExistingValues,
         CancellationToken cancellationToken);
 }

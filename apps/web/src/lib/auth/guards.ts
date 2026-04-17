@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { getSession, type Session } from "@/lib/auth/session";
 import type { Locale } from "@/lib/i18n/config";
 import { getMyOrganizations } from "@/lib/api/organizations";
@@ -23,6 +24,11 @@ export async function requireAuth(locale: Locale, targetPath: string = `/${local
 
   const session = await getSession();
   if (!session?.isAuthenticated) {
+    const referer = (await headers()).get("referer") ?? "";
+    if (referer.includes("/api/auth/kinde_callback")) {
+      redirect(`/${locale}/signed-out`);
+    }
+
     const loginUrl = `/api/auth/login?post_login_redirect_url=${encodeURIComponent(targetPath)}`;
     redirect(loginUrl);
   }
@@ -44,11 +50,17 @@ export async function requireOrganizationMembership(locale: Locale, session: Ses
   }
 
   if (!session.accessToken) {
-    redirect(`/${locale}/no-organization`);
+    redirect(`/${locale}/signed-out`);
   }
 
   const membershipsResult = await getMyOrganizations(session.accessToken);
+  if (membershipsResult.requiresReauth) {
+    // Avoid login redirect loops when API rejects access token (401).
+    // In this case the issue is usually token audience/scope/configuration.
+    redirect(`/${locale}/signed-out`);
+  }
+
   if (!membershipsResult.hasMembership) {
-    redirect(`/${locale}/no-organization`);
+    redirect(`/${locale}/app/no-organization`);
   }
 }

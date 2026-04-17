@@ -1,11 +1,15 @@
 using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Voluntrio.Common.Persistence.Context;
 
 #nullable disable
 
 namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20260416193000_AddIdentityUsersV1")]
     public partial class AddIdentityUsersV1 : Migration
     {
         /// <inheritdoc />

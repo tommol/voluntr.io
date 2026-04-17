@@ -3,6 +3,7 @@ import { t } from "@/lib/i18n/dictionaries";
 import { isLocale } from "@/lib/i18n/config";
 import { notFound } from "next/navigation";
 import { buildAlternates } from "@/lib/seo/alternates";
+import { requireAuth, requireOrganizationMembership } from "@/lib/auth/guards";
 import styles from "../../landing.module.css";
 
 type LocaleParams = Promise<{ locale: string }>;
@@ -28,6 +29,9 @@ export default async function AppZonePage({ params }: { params: LocaleParams }) 
   if (!isLocale(locale)) {
     notFound();
   }
+
+  const session = await requireAuth(locale, `/${locale}/app`);
+  await requireOrganizationMembership(locale, session);
 
   return (
     <main className={styles.main}>

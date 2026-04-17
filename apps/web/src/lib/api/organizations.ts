@@ -7,19 +7,34 @@ interface MembershipResponse {
   }>;
 }
 
-const apiBaseUrl = (process.env.VOLUNTRIO_API_URL ?? "http://localhost:5100").replace(/\/$/, "");
+export interface MembershipCheckResult {
+  hasMembership: boolean;
+  requiresReauth: boolean;
+}
 
-export async function getMyOrganizations(accessToken: string): Promise<{ hasMembership: boolean }> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/organizations/me/organizations`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-    cache: "no-store",
-  });
+const apiBaseUrl = (process.env.VOLUNTRIO_API_URL ?? "http://localhost:5177").replace(/\/$/, "");
+
+export async function getMyOrganizations(accessToken: string): Promise<MembershipCheckResult> {
+  let response: Response;
+  try {
+    response = await fetch(`${apiBaseUrl}/api/v1/organizations/me/organizations`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      cache: "no-store",
+    });
+  } catch {
+    // Treat API connectivity issues as no membership to avoid crashing app layout.
+    return { hasMembership: false, requiresReauth: false };
+  }
+
+  if (response.status === 401) {
+    return { hasMembership: false, requiresReauth: true };
+  }
 
   if (response.status === 403 || response.status === 404) {
-    return { hasMembership: false };
+    return { hasMembership: false, requiresReauth: false };
   }
 
   if (!response.ok) {
@@ -27,5 +42,5 @@ export async function getMyOrganizations(accessToken: string): Promise<{ hasMemb
   }
 
   const body = (await response.json()) as MembershipResponse;
-  return { hasMembership: body.organizations.length > 0 };
+  return { hasMembership: body.organizations.length > 0, requiresReauth: false };
 }

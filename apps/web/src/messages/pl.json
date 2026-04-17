@@ -39,6 +39,12 @@
     "description": "Konto jest poprawnie uwierzytelnione, ale nie ma aktywnego członkostwa w Voluntrio.",
     "hint": "Poproś administratora o dodanie do organizacji albo utwórz pierwszą organizację."
   },
+  "signedOut": {
+    "title": "Wylogowano pomyślnie",
+    "description": "Twoja sesja została bezpiecznie zakończona.",
+    "hint": "Możesz zalogować się ponownie w dowolnym momencie.",
+    "backToHome": "Wróć na stronę główną"
+  },
   "auth": {
     "requiredHint": "Aby wejść do tej sekcji, musisz się zalogować.",
     "forbiddenHint": "Nie masz uprawnień do strefy administracyjnej."

@@ -33,6 +33,10 @@ public sealed class IdentityModelBuilderConfiguration : IModelBuilderConfigurati
                 .HasColumnName("family_name")
                 .HasMaxLength(200);
 
+            builder.Property(x => x.AvatarUrl)
+                .HasColumnName("avatar_url")
+                .HasMaxLength(2048);
+
             builder.Property(x => x.CreatedAtUtc)
                 .HasColumnName("created_at_utc")
                 .IsRequired();

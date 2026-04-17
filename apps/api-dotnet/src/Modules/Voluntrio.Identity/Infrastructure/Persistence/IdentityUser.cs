@@ -12,6 +12,8 @@ public sealed class IdentityUser
 
     public string? FamilyName { get; private set; }
 
+    public string? AvatarUrl { get; private set; }
+
     public DateTime CreatedAtUtc { get; private set; }
 
     public DateTime UpdatedAtUtc { get; private set; }
@@ -26,6 +28,7 @@ public sealed class IdentityUser
         string? email,
         string? givenName,
         string? familyName,
+        string? avatarUrl,
         DateTime utcNow)
     {
         return new IdentityUser
@@ -35,16 +38,18 @@ public sealed class IdentityUser
             Email = email,
             GivenName = givenName,
             FamilyName = familyName,
+            AvatarUrl = avatarUrl,
             CreatedAtUtc = utcNow,
             UpdatedAtUtc = utcNow
         };
     }
 
-    public void UpdateProfile(string? email, string? givenName, string? familyName, DateTime utcNow)
+    public void UpdateProfile(string? email, string? givenName, string? familyName, string? avatarUrl, DateTime utcNow)
     {
         Email = email;
         GivenName = givenName;
         FamilyName = familyName;
+        AvatarUrl = avatarUrl;
         UpdatedAtUtc = utcNow;
     }
 

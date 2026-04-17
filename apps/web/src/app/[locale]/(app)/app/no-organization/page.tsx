@@ -3,7 +3,7 @@ import { t } from "@/lib/i18n/dictionaries";
 import { isLocale } from "@/lib/i18n/config";
 import { notFound } from "next/navigation";
 import { buildAlternates } from "@/lib/seo/alternates";
-import styles from "../../landing.module.css";
+import styles from "../../../landing.module.css";
 
 type LocaleParams = Promise<{ locale: string }>;
 
@@ -19,7 +19,7 @@ export async function generateMetadata({
 
   return {
     title: t(locale, "noOrganization.title"),
-    alternates: buildAlternates(locale, "/no-organization"),
+    alternates: buildAlternates(locale, "/app/no-organization"),
   };
 }
 
