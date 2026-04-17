@@ -27,9 +27,15 @@ public sealed class IdentityClaimsTransformationTests
 
         var storedMapping = await dbContext.Set<ExternalIdentity>()
             .SingleAsync(x => x.Provider == "kinde" && x.ExternalSubject == "kinde-user-123");
+        var storedUser = await dbContext.Set<IdentityUser>()
+            .SingleAsync(x => x.Id == internalUserId);
 
         Assert.Equal(internalUserId, storedMapping.InternalUserId);
         Assert.Equal("first@voluntr.io", storedMapping.Email);
+        Assert.Equal("first@voluntr.io", storedUser.Email);
+        Assert.Equal("First", storedUser.GivenName);
+        Assert.Equal("User", storedUser.FamilyName);
+        Assert.Equal("kinde-user-123", storedUser.KindeUserId);
 
         var httpContext = new DefaultHttpContext { User = transformed };
         var currentUser = new HttpContextCurrentUser(new HttpContextAccessor { HttpContext = httpContext });
@@ -56,8 +62,14 @@ public sealed class IdentityClaimsTransformationTests
 
         var storedMapping = await dbContext.Set<ExternalIdentity>()
             .SingleAsync(x => x.Provider == "kinde" && x.ExternalSubject == "kinde-user-555");
+        var storedUser = await dbContext.Set<IdentityUser>()
+            .SingleAsync(x => x.Id == storedMapping.InternalUserId);
 
         Assert.Equal("updated@voluntr.io", storedMapping.Email);
+        Assert.Equal("updated@voluntr.io", storedUser.Email);
+        Assert.Equal("Updated", storedUser.GivenName);
+        Assert.Equal("User", storedUser.FamilyName);
+        Assert.Equal("kinde-user-555", storedUser.KindeUserId);
     }
 
     private static ClaimsPrincipal CreatePrincipal(string sub, string email, string givenName, string familyName)

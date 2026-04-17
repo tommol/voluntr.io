@@ -18,6 +18,11 @@ public readonly record struct MembershipStatus
     public static readonly MembershipStatus Removed = new("removed");
 
     /// <summary>
+    /// The Suspended status indicating the member has been temporarily suspended from the organization.
+    /// </summary>
+    public static readonly MembershipStatus Suspended = new("suspended");
+
+    /// <summary>
     /// Gets the status value.
     /// </summary>
     public string Value { get; }
@@ -31,7 +36,7 @@ public readonly record struct MembershipStatus
     {
         var normalized = value?.Trim().ToLowerInvariant() ?? string.Empty;
 
-        if (normalized is not ("active" or "removed"))
+        if (normalized is not ("active" or "removed" or "suspended"))
         {
             throw new DomainException($"Unsupported membership status '{value}'.");
         }

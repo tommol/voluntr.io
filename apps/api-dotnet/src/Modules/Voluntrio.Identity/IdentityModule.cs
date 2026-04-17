@@ -13,9 +13,11 @@ public static class IdentityModule
     public static IServiceCollection AddIdentityModule(this IServiceCollection services)
     {
         services.AddHttpContextAccessor();
+        services.AddHttpClient();
 
         services.AddSingleton<IModelBuilderConfiguration, IdentityModelBuilderConfiguration>();
         services.AddScoped<IIdentityMappingService, IdentityMappingService>();
+        services.AddScoped<IIdentityUserProvisioningService, KindeIdentityUserProvisioningService>();
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
         services.AddScoped<IClaimsTransformation, IdentityClaimsTransformation>();
 
