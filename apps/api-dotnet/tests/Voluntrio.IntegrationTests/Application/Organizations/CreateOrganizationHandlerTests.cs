@@ -27,13 +27,13 @@ public sealed class CreateOrganizationHandlerTests
         var owner1 = Guid.CreateVersion7();
         var owner2 = Guid.CreateVersion7();
 
-        var first = await handler.Handle(new CreateOrganizationCommand("Acme Foundation", owner1, null), CancellationToken.None);
-        var second = await handler.Handle(new CreateOrganizationCommand("Acme Foundation", owner2, null), CancellationToken.None);
+        var first = await handler.Handle(new CreateOrganizationCommand("Acme Team", owner1, null), CancellationToken.None);
+        var second = await handler.Handle(new CreateOrganizationCommand("Acme Team", owner2, null), CancellationToken.None);
 
         Assert.True(first.IsSuccess);
         Assert.True(second.IsSuccess);
-        Assert.Equal("acme-foundation", first.Value.Slug);
-        Assert.Equal("acme-foundation-2", second.Value.Slug);
+        Assert.Equal("acme-team", first.Value.Slug);
+        Assert.Equal("acme-team-2", second.Value.Slug);
     }
 
     private sealed class FixedClock : IClock

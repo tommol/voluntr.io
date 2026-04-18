@@ -67,7 +67,7 @@ public sealed class OrganizationTests
 
         var organization = Organization.Create(
             OrganizationName.Create("Voluntr Team Child"),
-            OrganizationSlug.Create("voluntr-team-child"),
+            OrganizationSlug.Create("team-child"),
             ownerId,
             DateTime.UtcNow,
             parentOrganizationId);
