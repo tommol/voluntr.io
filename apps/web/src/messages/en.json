@@ -34,10 +34,28 @@
     "description": "This area currently requires sign-in. Role policies will be expanded next.",
     "status": "Baseline policy: authenticated users only."
   },
+  "selectOrganization": {
+    "title": "Select organization",
+    "description": "You belong to multiple organizations. Choose which one you want to work in during this session."
+  },
   "noOrganization": {
     "title": "No organization access yet",
     "description": "Your account is authenticated, but there is no active membership assigned in Voluntrio.",
     "hint": "Ask an administrator to add you to an organization, or create your first organization."
+  },
+  "profile": {
+    "title": "Your profile",
+    "description": "This page shows your account details from the current session.",
+    "nameLabel": "Name",
+    "emailLabel": "Email",
+    "userIdLabel": "User ID",
+    "rolesLabel": "Roles",
+    "rolesEmpty": "No roles assigned",
+    "organizationsLabel": "Organizations",
+    "organizationsEmpty": "No organizations assigned",
+    "organizationRoleLabel": "Role",
+    "activeOrganization": "Active",
+    "missingValue": "Not available"
   },
   "signedOut": {
     "title": "You are signed out",
@@ -53,32 +71,26 @@
     "headline": "Why Voluntrio?",
     "items": [
       {
-        "icon": "📦",
         "title": "Everything in one place",
         "description": "No more scattered files, spreadsheets and messages. The most important information is always at your fingertips."
       },
       {
-        "icon": "🗂️",
         "title": "Better team organisation",
         "description": "Everyone knows what to do, and tasks and responsibilities are clearly assigned."
       },
       {
-        "icon": "👥",
         "title": "Smoother member management",
         "description": "Manage memberships, roles and fees without unnecessary administration."
       },
       {
-        "icon": "📅",
         "title": "Easier event management",
         "description": "Organise meetings, campaigns and initiatives faster and with greater control."
       },
       {
-        "icon": "⚡",
         "title": "More time for your mission",
         "description": "Less manual work and operational chaos means more energy for real organisational activities."
       },
       {
-        "icon": "🚀",
         "title": "Ready to grow",
         "description": "Whether you run a small association or a larger foundation, Voluntrio grows with you."
       }

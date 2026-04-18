@@ -3,11 +3,21 @@ import { t } from "@/lib/i18n/dictionaries";
 import { isLocale } from "@/lib/i18n/config";
 import { notFound } from "next/navigation";
 import { buildAlternates } from "@/lib/seo/alternates";
+import { Boxes, CalendarDays, FolderKanban, Handshake, Rocket, Users, Zap, type LucideIcon } from "lucide-react";
 import { getFeatureItems } from "./features-data";
 import heroStyles from "./hero.module.css";
 import featuresStyles from "./features.module.css";
 
 type LocaleParams = Promise<{ locale: string }>;
+
+const featureIconMap: Record<string, LucideIcon> = {
+  boxes: Boxes,
+  folders: FolderKanban,
+  users: Users,
+  calendar: CalendarDays,
+  zap: Zap,
+  rocket: Rocket,
+};
 
 export async function generateMetadata({
   params,
@@ -65,20 +75,29 @@ export default async function LandingPage({
           </div>
         </div>
         <div className={heroStyles.heroVisual}>
-          <div className={heroStyles.visualCard}>🤝</div>
+          <div className={heroStyles.visualCard}>
+            <Handshake className={heroStyles.visualIcon} aria-hidden="true" />
+          </div>
         </div>
       </section>
       <section className={featuresStyles.section}>
         <div className={featuresStyles.inner}>
           <h2 className={featuresStyles.headline}>{t(locale, "features.headline")}</h2>
           <div className={featuresStyles.grid}>
-            {getFeatureItems(locale).map((item) => (
-              <div key={item.title} className={featuresStyles.card}>
-                <span className={featuresStyles.icon}>{item.icon}</span>
-                <h3 className={featuresStyles.title}>{item.title}</h3>
-                <p className={featuresStyles.description}>{item.description}</p>
-              </div>
-            ))}
+            {getFeatureItems(locale).map((item) => {
+              const FeatureIcon = featureIconMap[item.iconKey] ?? Boxes;
+              return (
+                <div key={item.title} className={featuresStyles.card}>
+                  <div className={featuresStyles.titleRow}>
+                    <span className={featuresStyles.icon} aria-hidden="true">
+                      <FeatureIcon />
+                    </span>
+                    <h3 className={featuresStyles.title}>{item.title}</h3>
+                  </div>
+                  <p className={featuresStyles.description}>{item.description}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

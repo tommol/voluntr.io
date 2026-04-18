@@ -1,13 +1,16 @@
+export interface OrganizationMembership {
+  organizationId: string;
+  name: string;
+  slug: string;
+  role: string;
+}
+
 interface MembershipResponse {
-  organizations: Array<{
-    organizationId: string;
-    name: string;
-    slug: string;
-    role: string;
-  }>;
+  organizations: OrganizationMembership[];
 }
 
 export interface MembershipCheckResult {
+  organizations: OrganizationMembership[];
   hasMembership: boolean;
   requiresReauth: boolean;
 }
@@ -26,15 +29,15 @@ export async function getMyOrganizations(accessToken: string): Promise<Membershi
     });
   } catch {
     // Treat API connectivity issues as no membership to avoid crashing app layout.
-    return { hasMembership: false, requiresReauth: false };
+    return { organizations: [], hasMembership: false, requiresReauth: false };
   }
 
   if (response.status === 401) {
-    return { hasMembership: false, requiresReauth: true };
+    return { organizations: [], hasMembership: false, requiresReauth: true };
   }
 
   if (response.status === 403 || response.status === 404) {
-    return { hasMembership: false, requiresReauth: false };
+    return { organizations: [], hasMembership: false, requiresReauth: false };
   }
 
   if (!response.ok) {
@@ -42,5 +45,9 @@ export async function getMyOrganizations(accessToken: string): Promise<Membershi
   }
 
   const body = (await response.json()) as MembershipResponse;
-  return { hasMembership: body.organizations.length > 0, requiresReauth: false };
+  return {
+    organizations: body.organizations,
+    hasMembership: body.organizations.length > 0,
+    requiresReauth: false,
+  };
 }

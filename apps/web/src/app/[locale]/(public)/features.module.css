@@ -14,7 +14,10 @@
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--foreground);
+  background: linear-gradient(90deg, var(--color-violet-700), var(--color-violet-400));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   text-align: center;
 }
 
@@ -39,20 +42,36 @@
   transform: translateY(-2px);
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .icon {
-  font-size: 32px;
+  width: 30px;
+  height: 30px;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+}
+
+.icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .title {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 700;
-  color: var(--foreground);
+  color: var(--color-primary);
   margin: 0;
 }
 
 .description {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.6;
   color: var(--text-muted);
   margin: 0;

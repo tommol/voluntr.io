@@ -1,0 +1,65 @@
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 480px;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 20px;
+  background: white;
+  border: 1px solid var(--color-violet-200);
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  gap: 12px;
+}
+
+.card:hover:not(:disabled) {
+  border-color: var(--color-violet-400);
+  box-shadow: 0 4px 12px rgba(73, 0, 160, 0.1);
+}
+
+.card:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.orgName {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.orgRole {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-violet-200);
+  border-top-color: var(--color-violet-600);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

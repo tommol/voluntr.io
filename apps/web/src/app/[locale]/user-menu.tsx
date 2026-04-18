@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n/config";
+import { ChevronDown } from "lucide-react";
 import styles from "./user-menu.module.css";
 
 interface UserMenuProps {
@@ -32,11 +33,11 @@ export function UserMenu({ locale, userName, userAvatarUrl }: UserMenuProps) {
           {!userAvatarUrl && <span className={styles.initials}>{initials}</span>}
         </span>
         <span className={styles.name}>{displayName}</span>
-        <span className={styles.caret} aria-hidden="true">▾</span>
+        <ChevronDown className={styles.caret} aria-hidden="true" />
       </summary>
 
       <div className={styles.panel}>
-        <a href={`/${locale}/profile`} className={styles.item}>
+        <a href={`/${locale}/app/profile`} className={styles.item}>
           {profileLabel}
         </a>
         <a href={logoutUrl} className={styles.item}>
