@@ -18,22 +18,27 @@ using Voluntrio.Common.Persistence.Stores;
 using Voluntrio.Common.Infrastructure.Integration;
 using Voluntrio.Common.Infrastructure.Outbox;
 using Voluntrio.Organizations.Application.Federation;
+using Voluntrio.Organizations.Application.Shared;
 using Voluntrio.Organizations.Application.UseCases.AddOrganizationMember;
 using Voluntrio.Organizations.Application.UseCases.ChangeMemberRole;
 using Voluntrio.Organizations.Application.UseCases.CreateOrganization;
 using Voluntrio.Organizations.Application.UseCases.CreateSubOrganization;
+using Voluntrio.Organizations.Application.UseCases.GetMyOrganizations;
 using Voluntrio.Organizations.Application.UseCases.GetOrganization;
 using Voluntrio.Organizations.Application.UseCases.ListOrganizationMembers;
 using Voluntrio.Organizations.Application.UseCases.ListSubOrganizations;
 using Voluntrio.Organizations.Application.UseCases.RemoveOrganizationMember;
+using Voluntrio.Organizations.Application.UseCases.InviteOrganizationMember;
 using Voluntrio.Organizations.Contracts.UseCases.AddOrganizationMember;
 using Voluntrio.Organizations.Contracts.UseCases.ChangeMemberRole;
 using Voluntrio.Organizations.Contracts.UseCases.CreateOrganization;
 using Voluntrio.Organizations.Contracts.UseCases.CreateSubOrganization;
+using Voluntrio.Organizations.Contracts.UseCases.GetMyOrganizations;
 using Voluntrio.Organizations.Contracts.UseCases.GetOrganization;
 using Voluntrio.Organizations.Contracts.UseCases.ListOrganizationMembers;
 using Voluntrio.Organizations.Contracts.UseCases.ListSubOrganizations;
 using Voluntrio.Organizations.Contracts.UseCases.RemoveOrganizationMember;
+using Voluntrio.Organizations.Contracts.UseCases.InviteOrganizationMember;
 using Voluntrio.Organizations.Infrastructure.Integration;
 using Voluntrio.Organizations.Infrastructure.Outbox;
 using Voluntrio.Organizations.Infrastructure.Persistence;
@@ -78,13 +83,16 @@ public static class OrganizationsModule
         services.AddScoped<ICommandDispatcher, CommandDispatcher>();
         services.AddScoped<IQueryDispatcher, QueryDispatcher>();
         services.AddScoped<IFederationMembershipService, FederationMembershipService>();
+        services.AddScoped<IOrganizationMembershipAuthorization, OrganizationMembershipAuthorization>();
 
         services.AddScoped<ICommandHandler<CreateOrganizationCommand, Result<CreateOrganizationResponse>>, CreateOrganizationHandler>();
         services.AddScoped<ICommandHandler<CreateSubOrganizationCommand, Result<CreateSubOrganizationResponse>>, CreateSubOrganizationHandler>();
         services.AddScoped<ICommandHandler<AddOrganizationMemberCommand, Result<AddOrganizationMemberResponse>>, AddOrganizationMemberHandler>();
+        services.AddScoped<ICommandHandler<InviteOrganizationMemberCommand, Result<InviteOrganizationMemberResponse>>, InviteOrganizationMemberHandler>();
         services.AddScoped<ICommandHandler<ChangeMemberRoleCommand, Result<ChangeMemberRoleResponse>>, ChangeMemberRoleHandler>();
         services.AddScoped<ICommandHandler<RemoveOrganizationMemberCommand, Result<RemoveOrganizationMemberResponse>>, RemoveOrganizationMemberHandler>();
         services.AddScoped<IQueryHandler<GetOrganizationQuery, Result<GetOrganizationResponse>>, GetOrganizationHandler>();
+        services.AddScoped<IQueryHandler<GetMyOrganizationsQuery, Result<GetMyOrganizationsResponse>>, GetMyOrganizationsHandler>();
         services.AddScoped<IQueryHandler<ListOrganizationMembersQuery, Result<ListOrganizationMembersResponse>>, ListOrganizationMembersHandler>();
         services.AddScoped<IQueryHandler<ListSubOrganizationsQuery, Result<ListSubOrganizationsResponse>>, ListSubOrganizationsHandler>();
 
@@ -111,7 +119,8 @@ public static class OrganizationsModule
 
         var group = app.MapGroup("/api/v{version:apiVersion}/organizations")
             .WithApiVersionSet(versionSet)
-            .WithTags("Organizations");
+            .WithTags("Organizations")
+            .RequireAuthorization();
 
         group.MapRegisteredEndpoints();
         return app;

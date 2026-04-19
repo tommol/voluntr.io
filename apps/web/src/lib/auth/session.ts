@@ -1,45 +1,44 @@
-import { cookies } from "next/headers";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getMyIdentityProfile } from "@/lib/api/identity";
 
 export interface Session {
   isAuthenticated: boolean;
   userId?: string;
+  userName?: string;
+  userAvatarUrl?: string;
   roles: string[];
-}
-
-export const sessionCookieName = "voluntr_session";
-export const userIdCookieName = "voluntr_user";
-export const rolesCookieName = "voluntr_roles";
-
-interface CookieReader {
-  get(name: string): { value: string } | undefined;
-}
-
-function parseRoles(rawRoles: string | undefined): string[] {
-  if (!rawRoles) {
-    return [];
-  }
-
-  return rawRoles
-    .split(",")
-    .map((role) => role.trim())
-    .filter(Boolean);
-}
-
-export function getSessionFromCookies(cookieStore: CookieReader): Session | null {
-  const isAuthenticated = cookieStore.get(sessionCookieName)?.value === "1";
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  return {
-    isAuthenticated: true,
-    userId: cookieStore.get(userIdCookieName)?.value,
-    roles: parseRoles(cookieStore.get(rolesCookieName)?.value),
-  };
+  accessToken?: string;
 }
 
 export async function getSession(): Promise<Session | null> {
-  const cookieStore = await cookies();
-  return getSessionFromCookies(cookieStore);
-}
+  const { isAuthenticated, getUser, getRoles, getAccessTokenRaw, getIdTokenRaw } = getKindeServerSession();
+  const [authenticated, accessToken, idToken] = await Promise.all([
+    isAuthenticated(),
+    getAccessTokenRaw(),
+    getIdTokenRaw(),
+  ]);
 
+  // In some callback edge-cases isAuthenticated can be temporarily false
+  // while token cookies are already present.
+  if (!authenticated && !accessToken && !idToken) {
+    return null;
+  }
+
+  const user = await getUser().catch(() => null);
+  const rolesResult = await getRoles().catch(() => null);
+  const profile = accessToken ? await getMyIdentityProfile(accessToken).catch(() => null) : null;
+
+  const userAvatarUrl = profile?.avatarUrl ?? undefined;
+  const givenName = profile?.givenName ?? user?.given_name;
+  const familyName = profile?.familyName ?? user?.family_name;
+  const displayName = [givenName, familyName].filter(Boolean).join(" ") || profile?.email || user?.email || undefined;
+
+  return {
+    isAuthenticated: true,
+    userId: user?.id,
+    userName: displayName,
+    userAvatarUrl,
+    roles: rolesResult?.map((role) => role.key) ?? [],
+    accessToken: accessToken ?? undefined,
+  };
+}

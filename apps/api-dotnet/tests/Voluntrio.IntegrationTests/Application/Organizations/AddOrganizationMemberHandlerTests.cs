@@ -66,7 +66,7 @@ public sealed class AddOrganizationMemberHandlerTests
             DateTime.UtcNow);
         var childA = Organization.Create(
             OrganizationName.Create("Child A"),
-            OrganizationSlug.Create("child-a-root-a"),
+            OrganizationSlug.Create("child-a-a"),
             ownerA,
             DateTime.UtcNow,
             rootA.Id);
@@ -78,7 +78,7 @@ public sealed class AddOrganizationMemberHandlerTests
             DateTime.UtcNow);
         var childB = Organization.Create(
             OrganizationName.Create("Child B"),
-            OrganizationSlug.Create("child-b-root-b"),
+            OrganizationSlug.Create("child-b-b"),
             ownerB,
             DateTime.UtcNow,
             rootB.Id);
@@ -106,7 +106,7 @@ public sealed class AddOrganizationMemberHandlerTests
 
         var organization = Organization.Create(
             OrganizationName.Create("Standalone Org"),
-            OrganizationSlug.Create("standalone-org"),
+            OrganizationSlug.Create("stand-org"),
             ownerId,
             DateTime.UtcNow);
 

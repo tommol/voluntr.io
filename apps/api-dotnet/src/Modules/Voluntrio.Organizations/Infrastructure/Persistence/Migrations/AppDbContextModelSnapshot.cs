@@ -150,6 +150,98 @@ namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox_messages", "common");
                 });
 
+            modelBuilder.Entity("Voluntrio.Identity.Infrastructure.Persistence.ExternalIdentity", b =>
+                {
+                    b.Property<string>("Provider")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("provider");
+
+                    b.Property<string>("ExternalSubject")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("external_subject");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("FamilyName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("family_name");
+
+                    b.Property<string>("GivenName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("given_name");
+
+                    b.Property<Guid>("InternalUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("internal_user_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Provider", "ExternalSubject");
+
+                    b.HasIndex("InternalUserId")
+                        .IsUnique();
+
+                    b.ToTable("external_identities", "identity");
+                });
+
+            modelBuilder.Entity("Voluntrio.Identity.Infrastructure.Persistence.IdentityUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("avatar_url");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("FamilyName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("family_name");
+
+                    b.Property<string>("GivenName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("given_name");
+
+                    b.Property<string>("KindeUserId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("kinde_user_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email");
+
+                    b.HasIndex("KindeUserId")
+                        .IsUnique();
+
+                    b.ToTable("users", "identity");
+                });
+
             modelBuilder.Entity("Voluntrio.Organizations.Domain.Memberships.Membership", b =>
                 {
                     b.Property<Guid>("OrganizationId")
@@ -218,8 +310,8 @@ namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
                         .HasColumnName("slug");
 
                     b.Property<string>("Status")
@@ -243,6 +335,15 @@ namespace Voluntrio.Organizations.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_organizations_parent_not_self", "parent_organization_id IS NULL OR parent_organization_id <> id");
                         });
+                });
+
+            modelBuilder.Entity("Voluntrio.Identity.Infrastructure.Persistence.ExternalIdentity", b =>
+                {
+                    b.HasOne("Voluntrio.Identity.Infrastructure.Persistence.IdentityUser", null)
+                        .WithMany()
+                        .HasForeignKey("InternalUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Voluntrio.Organizations.Domain.Memberships.Membership", b =>

@@ -12,7 +12,7 @@ public sealed partial record OrganizationSlug
     /// <summary>
     /// The maximum length of an organization slug.
     /// </summary>
-    public const int MaxLength = 120;
+    public const int MaxLength = 12;
 
     /// <summary>
     /// Gets the organization slug value.

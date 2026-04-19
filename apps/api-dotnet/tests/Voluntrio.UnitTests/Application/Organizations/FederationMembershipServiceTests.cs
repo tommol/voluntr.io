@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Voluntrio.Common.Persistence.Abstractions;
 using Voluntrio.Common.Persistence.Context;
+using Voluntrio.Identity.Infrastructure.Persistence;
 using Voluntrio.Organizations.Application.Federation;
 using Voluntrio.Organizations.Domain.Organizations;
 using Voluntrio.Organizations.Domain.ValueObjects;
@@ -115,7 +116,8 @@ public sealed class FederationMembershipServiceTests
 
         var modelConfigurations = new IModelBuilderConfiguration[]
         {
-            new OrganizationsModelBuilderConfiguration()
+            new OrganizationsModelBuilderConfiguration(),
+            new IdentityModelBuilderConfiguration()
         };
 
         return new AppDbContext(options, modelConfigurations);

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Voluntrio.Common.Persistence.Context;
+using Voluntrio.Identity.Infrastructure.Persistence;
 using Voluntrio.Organizations.Infrastructure.Persistence;
 
 namespace Voluntrio.Organizations.Infrastructure.Persistence;
@@ -25,6 +26,6 @@ internal sealed class OrganizationsDbContextFactory : IDesignTimeDbContextFactor
 
         return new AppDbContext(
             options,
-            [new OrganizationsModelBuilderConfiguration()]);
+            [new OrganizationsModelBuilderConfiguration(), new IdentityModelBuilderConfiguration()]);
     }
 }

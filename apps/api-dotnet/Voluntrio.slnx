@@ -9,6 +9,7 @@
     <Project Path="src/Common/Voluntrio.Common.Persistence/Voluntrio.Common.Persistence.csproj" />
   </Folder>
   <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/Voluntrio.Identity/Voluntrio.Identity.csproj" />
     <Project Path="src/Modules/Voluntrio.Organizations.Contracts/Voluntrio.Organizations.Contracts.csproj" />
     <Project Path="src/Modules/Voluntrio.Organizations/Voluntrio.Organizations.csproj" />
   </Folder>

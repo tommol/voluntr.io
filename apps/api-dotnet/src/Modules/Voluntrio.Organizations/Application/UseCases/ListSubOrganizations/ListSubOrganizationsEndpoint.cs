@@ -1,7 +1,9 @@
 using Voluntrio.Common.Application.Dispatching;
 using Voluntrio.Common.Application.Endpoints;
 using Voluntrio.Common.Application.Results;
+using Voluntrio.Organizations.Application.Shared;
 using Voluntrio.Organizations.Contracts.UseCases.ListSubOrganizations;
+using Voluntrio.Identity.Application.Abstractions;
 
 namespace Voluntrio.Organizations.Application.UseCases.ListSubOrganizations;
 
@@ -24,8 +26,25 @@ public sealed class ListSubOrganizationsEndpoint : IEndpoint
     private static async Task<IResult> Handle(
         Guid organizationId,
         IQueryDispatcher queryDispatcher,
+        ICurrentUser currentUser,
+        IOrganizationMembershipAuthorization membershipAuthorization,
         CancellationToken cancellationToken)
     {
+        if (!currentUser.IsAuthenticated || !currentUser.InternalUserId.HasValue)
+        {
+            return new Error("auth.unauthorized", "Unauthorized user.").ToHttpResult();
+        }
+
+        var membershipResult = await membershipAuthorization.EnsureActiveMembership(
+            currentUser.InternalUserId.Value,
+            organizationId,
+            cancellationToken);
+
+        if (membershipResult.IsFailure)
+        {
+            return membershipResult.Error.ToHttpResult();
+        }
+
         var result = await queryDispatcher.Send<ListSubOrganizationsQuery, Result<ListSubOrganizationsResponse>>(
             new ListSubOrganizationsQuery(organizationId),
             cancellationToken);

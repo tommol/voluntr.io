@@ -27,12 +27,41 @@
   "appZone": {
     "title": "Strefa Aplikacji",
     "description": "Ta część ma osobny layout i wymaga uwierzytelnienia.",
-    "status": "Aktualny tryb auth: szkielet + guardy."
+    "status": "Aktualny tryb auth: sesja Kinde + membership check w API."
   },
   "adminZone": {
     "title": "Strefa Administracyjna",
-    "description": "Ta część jest chroniona przez uwierzytelnienie i RBAC.",
-    "status": "Wymagana rola: admin."
+    "description": "Ta część na tym etapie wymaga zalogowania. Polityki ról dopniemy w kolejnym kroku.",
+    "status": "Polityka bazowa: tylko użytkownicy zalogowani."
+  },
+  "selectOrganization": {
+    "title": "Wybierz organizację",
+    "description": "Należysz do kilku organizacji. Wybierz, w której chcesz pracować podczas tej sesji."
+  },
+  "noOrganization": {
+    "title": "Brak dostępu do organizacji",
+    "description": "Konto jest poprawnie uwierzytelnione, ale nie ma aktywnego członkostwa w Voluntrio.",
+    "hint": "Poproś administratora o dodanie do organizacji albo utwórz pierwszą organizację."
+  },
+  "profile": {
+    "title": "Twój profil",
+    "description": "Ta strona pokazuje dane konta z aktualnej sesji.",
+    "nameLabel": "Imię i nazwisko",
+    "emailLabel": "Email",
+    "userIdLabel": "ID użytkownika",
+    "rolesLabel": "Role",
+    "rolesEmpty": "Brak przypisanych ról",
+    "organizationsLabel": "Organizacje",
+    "organizationsEmpty": "Brak przypisanych organizacji",
+    "organizationRoleLabel": "Rola",
+    "activeOrganization": "Aktywna",
+    "missingValue": "Brak danych"
+  },
+  "signedOut": {
+    "title": "Wylogowano pomyślnie",
+    "description": "Twoja sesja została bezpiecznie zakończona.",
+    "hint": "Możesz zalogować się ponownie w dowolnym momencie.",
+    "backToHome": "Wróć na stronę główną"
   },
   "auth": {
     "requiredHint": "Aby wejść do tej sekcji, musisz się zalogować.",
@@ -42,32 +71,26 @@
     "headline": "Dlaczego Voluntrio?",
     "items": [
       {
-        "icon": "📦",
         "title": "Wszystko w jednym miejscu",
         "description": "Koniec z rozproszonymi plikami, arkuszami i wiadomościami. Najważniejsze informacje masz zawsze pod ręką."
       },
       {
-        "icon": "🗂️",
         "title": "Lepsza organizacja zespołu",
         "description": "Każdy wie, co ma robić, a zadania i odpowiedzialności są jasno przypisane."
       },
       {
-        "icon": "👥",
         "title": "Sprawniejsza obsługa członków",
         "description": "Zarządzaj członkostwem, rolami i składkami bez zbędnej administracji."
       },
       {
-        "icon": "📅",
         "title": "Łatwiejsze prowadzenie wydarzeń",
         "description": "Organizuj spotkania, akcje i inicjatywy szybciej i z większą kontrolą."
       },
       {
-        "icon": "⚡",
         "title": "Więcej czasu na misję",
         "description": "Mniej ręcznej pracy i operacyjnego chaosu oznacza więcej energii na realne działania organizacji."
       },
       {
-        "icon": "🚀",
         "title": "Gotowe do rozwoju",
         "description": "Niezależnie od tego, czy prowadzisz małe stowarzyszenie, czy większą fundację, Voluntrio rośnie razem z Wami."
       }
@@ -86,4 +109,3 @@
     "description": "Budujemy najlepszą platformę do koordynacji wolontariatu."
   }
 }
-

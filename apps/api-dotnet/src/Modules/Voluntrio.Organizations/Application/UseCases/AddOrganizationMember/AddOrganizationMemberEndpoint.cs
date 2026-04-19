@@ -3,6 +3,7 @@ using Voluntrio.Common.Application.Results;
 using Voluntrio.Organizations.Application.Shared;
 using Voluntrio.Common.Application.Endpoints;
 using Voluntrio.Organizations.Contracts.UseCases.AddOrganizationMember;
+using Voluntrio.Identity.Application.Abstractions;
 
 namespace Voluntrio.Organizations.Application.UseCases.AddOrganizationMember;
 
@@ -27,18 +28,29 @@ public sealed class AddOrganizationMemberEndpoint : IEndpoint
         AddOrganizationMemberRequest request,
         HttpContext httpContext,
         ICommandDispatcher commandDispatcher,
+        ICurrentUser currentUser,
+        IOrganizationMembershipAuthorization membershipAuthorization,
         CancellationToken cancellationToken)
     {
-        var actorResult = EndpointUserContext.ReadActorUserId(httpContext);
-        if (actorResult.IsFailure)
+        if (!currentUser.IsAuthenticated || !currentUser.InternalUserId.HasValue)
         {
-            return actorResult.Error.ToHttpResult();
+            return new Error("auth.unauthorized", "Unauthorized user.").ToHttpResult();
+        }
+
+        var membershipResult = await membershipAuthorization.EnsureActiveMembership(
+            currentUser.InternalUserId.Value,
+            organizationId,
+            cancellationToken);
+
+        if (membershipResult.IsFailure)
+        {
+            return membershipResult.Error.ToHttpResult();
         }
 
         var result = await commandDispatcher.Send<AddOrganizationMemberCommand, Result<AddOrganizationMemberResponse>>(
             new AddOrganizationMemberCommand(
                 organizationId,
-                actorResult.Value,
+                currentUser.InternalUserId.Value,
                 request.UserId,
                 request.Role,
                 EndpointUserContext.ReadIdempotencyKey(httpContext)),
